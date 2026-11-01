@@ -271,7 +271,6 @@ function CPU.new(callbacks, options)
 		fastSpinLoops = options.fastSpinLoops == true,
 		fastSumLoops = options.fastSumLoops == true,
 		fastRepStrings = options.fastRepStrings ~= false,
-		reuseStepResult = options.reuseStepResult == true,
 		reuseDecodeState = options.reuseDecodeState == true,
 		maxSpinInstructions = math.max(1, math.floor(tonumber(options.maxSpinInstructions) or 1)),
 		strictLock = options.strictLock ~= false,
