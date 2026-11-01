@@ -1,0 +1,992 @@
+[
+  {
+    "path": "StarterPlayer/StarterPlayerScripts/RoEmuKeyboard.client.lua",
+    "class": "LocalScript",
+    "file": "src/StarterPlayer/StarterPlayerScripts/RoEmuKeyboard.client.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "StarterPlayer/StarterPlayerScripts/RoEmu_ClientAttach.client.lua",
+    "class": "LocalScript",
+    "file": "src/StarterPlayer/StarterPlayerScripts/RoEmu_ClientAttach.client.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "StarterPlayer/StarterPlayerScripts/RoEmu_RemotesAttach.client.lua",
+    "class": "LocalScript",
+    "file": "src/StarterPlayer/StarterPlayerScripts/RoEmu_RemotesAttach.client.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "StarterPlayer/StarterPlayerScripts/RoEmu_RemotesKeyboard.client.lua",
+    "class": "LocalScript",
+    "file": "src/StarterPlayer/StarterPlayerScripts/RoEmu_RemotesKeyboard.client.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "StarterPlayer/StarterPlayerScripts/RoEmu_TerminalAutoScroll.client.lua",
+    "class": "LocalScript",
+    "file": "src/StarterPlayer/StarterPlayerScripts/RoEmu_TerminalAutoScroll.client.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "StarterGui/ScreenGui/base/Consola/ConsoleBridge",
+    "class": "LocalScript",
+    "file": "src/StarterGui/ScreenGui/base/Consola/ConsoleBridge.luau",
+    "external_payload": false
+  },
+  {
+    "path": "StarterGui/ScreenGui/RoEmuScreenConsole.client.lua",
+    "class": "LocalScript",
+    "file": "src/StarterGui/ScreenGui/RoEmuScreenConsole.client.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "StarterGui/PerfectDOSVGA437Demo/Demo",
+    "class": "LocalScript",
+    "file": "src/StarterGui/PerfectDOSVGA437Demo/Demo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/plic",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/plic.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/clint",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/clint.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/core",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/core.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/mmu_sv32",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/mmu_sv32.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/platform",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/platform.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/elf32",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/elf32.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/board_minimal",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/board_minimal.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/RoEmu_Monitor",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/RoEmu_Monitor.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/RoEmu_Print",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/RoEmu_Print.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/sbi_min",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/sbi_min.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/FreeRTOS_RV32_QEMU_VIRT",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/FreeRTOS_RV32_QEMU_VIRT.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/Firmware_OpenSBI",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/Firmware_OpenSBI.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/devices/uart16550",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/devices/uart16550.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/devices/virtio_blk_sparse",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/devices/virtio_blk_sparse.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_QEMUvirt_DTB",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_QEMUvirt_DTB.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_OpenSBI_FW_DYNAMIC_BIN",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_OpenSBI_FW_DYNAMIC_BIN.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Caribe_ELF",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Caribe_ELF.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_OpenSBI_FW_DYNAMIC_ELF",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_OpenSBI_FW_DYNAMIC_ELF.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk001",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk001.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk002",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk002.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk003",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk003.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk004",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk004.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk005",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk005.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk006",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk006.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk007",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk007.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk008",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk008.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk009",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk009.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk010",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk010.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk011",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk011.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk012",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk012.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk013",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk013.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk014",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk014.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk015",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk015.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk016",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk016.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk017",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk017.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk018",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk018.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk019",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk019.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk020",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk020.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk021",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk021.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk022",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk022.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk023",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk023.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk024",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk024.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk025",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk025.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk026",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk026.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk027",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk027.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk028",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk028.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk029",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk029.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk030",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk030.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk031",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk031.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk032",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk032.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk033",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk033.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk034",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk034.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk035",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk035.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk036",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk036.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk037",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk037.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk038",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk038.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk039",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk039.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk040",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk040.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk041",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk041.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk042",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk042.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk043",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk043.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk044",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk044.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk045",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk045.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk046",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk046.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk047",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk047.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk048",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk048.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk049",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk049.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk050",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk050.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk051",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk051.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk052",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk052.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk053",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk053.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk054",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk054.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk055",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk055.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk056",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk056.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk057",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk057.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk058",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk058.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk059",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/Return_Linux_RV32_Min_Initramfs_Image_chunks/chunk059.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ReplicatedStorage/RiscV/firmware/CaribeOS_RV32_Manifest",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RiscV/firmware/CaribeOS_RV32_Manifest.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/PerfectDOSVGA437/FontData",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/PerfectDOSVGA437/FontData.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/PerfectDOSVGA437/PixelText",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/PerfectDOSVGA437/PixelText.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RoEMUPoweredLogo",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RoEMUPoweredLogo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RoEmu_BootSelectorClient",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RoEmu_BootSelectorClient.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RoEmu_PC_VideoClient",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RoEmu_PC_VideoClient.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunOpenSbiHelloDemo",
+    "class": "ModuleScript",
+    "file": "src/ServerScriptService/RunOpenSbiHelloDemo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/Lib/BlobDecoder",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/Lib/BlobDecoder.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/Blobs/Return_Caribe_ELF",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/Blobs/Return_Caribe_ELF.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ServerStorage/Blobs/Return_OpenSBI_FW_DYNAMIC_BIN",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/Blobs/Return_OpenSBI_FW_DYNAMIC_BIN.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ServerStorage/Blobs/Return_QEMUvirt_DTB",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/Blobs/Return_QEMUvirt_DTB.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_Util/ChunkDecoder",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_Util/ChunkDecoder.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV2Backup/ReplicatedStorage__RiscV__core",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmuTurboV2Backup/ReplicatedStorage__RiscV__core.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV2Backup/ReplicatedStorage__RiscV__elf32",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmuTurboV2Backup/ReplicatedStorage__RiscV__elf32.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV21Backup/ReplicatedStorage__RiscV__firmware__Return_QEMUvirt_DTB",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmuTurboV21Backup/ReplicatedStorage__RiscV__firmware__Return_QEMUvirt_DTB.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_i386_CPU",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_i386_CPU.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_i386_Memory",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_i386_Memory.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_i386_Platform",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_i386_Platform.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_BootController",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_BootController.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_Win95DiskMetadata",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_Win95DiskMetadata.luau",
+    "external_payload": true
+  },
+  {
+    "path": "ServerStorage/RoEmu_PC_PCI",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_PC_PCI.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_PC_ATA",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_PC_ATA.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_PC_PIC",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_PC_PIC.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_PC_VGA",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_PC_VGA.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_PC_Machine",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_PC_Machine.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_PC_DiskLoader",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_PC_DiskLoader.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_PC_Runtime",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_PC_Runtime.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ReplicatedStorage/RoEmu_PC_Pixels",
+    "class": "ModuleScript",
+    "file": "src/ReplicatedStorage/RoEmu_PC_Pixels.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_PC_FrameStream",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_PC_FrameStream.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunSModeDemo",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunSModeDemo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunElfDemo",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunElfDemo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunElfWriteDemo",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunElfWriteDemo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunSyscallEchoDemo",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunSyscallEchoDemo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RoEmu_Server",
+    "class": "Script",
+    "file": "src/ServerScriptService/RoEmu_Server.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunUartBoard",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunUartBoard.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunPrivDemo",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunPrivDemo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunPrivSbiDemo",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunPrivSbiDemo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RoEmu_Bootstrap.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/RoEmu_Bootstrap.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunClintTest",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunClintTest.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunSbiEchoDemo",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunSbiEchoDemo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunElfMultiSegDemo",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunElfMultiSegDemo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunTimerTickDemo",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunTimerTickDemo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RoEmu_OutInit.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/RoEmu_OutInit.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunPlicEchoDemo",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunPlicEchoDemo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/00_RoEmu_CoreCompat.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/00_RoEmu_CoreCompat.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RoEmu_ClientAttach.client.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/RoEmu_ClientAttach.client.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunOpenSbiDemo.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunOpenSbiDemo.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunOpenSBI.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunOpenSBI.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/01_RoEmu_CoreExport.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/01_RoEmu_CoreExport.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/00_RoEmu_RemotesAndLog.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/00_RoEmu_RemotesAndLog.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/00_RoEmu_RemoteGate.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/00_RoEmu_RemoteGate.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/00_RoEmu_Channel.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/00_RoEmu_Channel.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunCaribeBootX.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunCaribeBootX.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/00_RoEmu_InputGate.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/00_RoEmu_InputGate.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/00_RoEmu_SharedBridge.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/00_RoEmu_SharedBridge.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/00_RoEmu_CoreAPI_Publish.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/00_RoEmu_CoreAPI_Publish.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunOpenSBI_Direct.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunOpenSBI_Direct.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RunOpenSBI_Payload.server.lua",
+    "class": "Script",
+    "file": "src/ServerScriptService/RunOpenSBI_Payload.server.lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/00_bypass_start_hang",
+    "class": "Script",
+    "file": "src/ServerScriptService/00_bypass_start_hang.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/00_hart_fix",
+    "class": "Script",
+    "file": "src/ServerScriptService/00_hart_fix.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/00_linux_next_stage_loader",
+    "class": "Script",
+    "file": "src/ServerScriptService/00_linux_next_stage_loader.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/00_linux_step_shim",
+    "class": "Script",
+    "file": "src/ServerScriptService/00_linux_step_shim.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/00_sv32_mmu_runtime",
+    "class": "Script",
+    "file": "src/ServerScriptService/00_sv32_mmu_runtime.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerScriptService/RoEmuTurboV2Profiler",
+    "class": "Script",
+    "file": "src/ServerScriptService/RoEmuTurboV2Profiler.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV2Backup/ServerScriptService__00_sv32_mmu_runtime",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV2Backup/ServerScriptService__00_sv32_mmu_runtime.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV2Backup/ServerScriptService__00_linux_step_shim",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV2Backup/ServerScriptService__00_linux_step_shim.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV2Backup/ServerScriptService__00_linux_next_stage_loader",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV2Backup/ServerScriptService__00_linux_next_stage_loader.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV2Backup/ServerScriptService__00_hart_fix",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV2Backup/ServerScriptService__00_hart_fix.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV2Backup/ServerScriptService__RunOpenSBI_Direct__server__lua",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV2Backup/ServerScriptService__RunOpenSBI_Direct__server__lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV2Backup/ServerScriptService__RunTimerTickDemo",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV2Backup/ServerScriptService__RunTimerTickDemo.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV2Backup/ServerScriptService__01_RoEmu_CoreExport__server__lua",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV2Backup/ServerScriptService__01_RoEmu_CoreExport__server__lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV2Backup/ServerScriptService__RoEmu_Bootstrap__server__lua",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV2Backup/ServerScriptService__RoEmu_Bootstrap__server__lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV21Backup/ServerScriptService__00_linux_step_shim",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV21Backup/ServerScriptService__00_linux_step_shim.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV21Backup/ServerScriptService__RunOpenSBI_Direct__server__lua",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV21Backup/ServerScriptService__RunOpenSBI_Direct__server__lua.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV211Backup",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV211Backup.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV22Backup",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV22Backup.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV23Backup/00_linux_step_shim_backup",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV23Backup/00_linux_step_shim_backup.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV24Backup/00_linux_step_shim_backup",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV24Backup/00_linux_step_shim_backup.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV24Backup/RunOpenSBI_Direct.server.lua_backup",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV24Backup/RunOpenSBI_Direct.server.lua_backup.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmuTurboV25Backup",
+    "class": "Script",
+    "file": "src/ServerStorage/RoEmuTurboV25Backup.luau",
+    "external_payload": false
+  }
+]

@@ -1,0 +1,24 @@
+name: Error del emulador
+description: Informa un fallo reproducible de CPU, dispositivos, entrada o vídeo.
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Comportamiento observado y esperado
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Pasos o caso mínimo
+      description: No adjuntes discos, ROMs, claves ni datos personales.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Versión de Studio, arquitectura y commit
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnóstico mínimo sin datos privados

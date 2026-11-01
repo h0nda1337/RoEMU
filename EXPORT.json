@@ -1,0 +1,12 @@
+{
+  "scripts": 165,
+  "external_payload_placeholders": 67,
+  "instances": 3168,
+  "template_bytes": 105998,
+  "cleared_string_values": 2900,
+  "removed_string_value_bytes": 243449810,
+  "template_sources_empty": true,
+  "no_guest_or_firmware_payloads": true,
+  "source_paths_preserved": true,
+  "template_sha256": "94a0e545edab10e767b3ef7e1a0d89c8eb54d1aa82a16e300000b56f01af438c"
+}
