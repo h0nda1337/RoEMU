@@ -1,7 +1,7 @@
 # Licencias y atribuciones
 
 Este repositorio publica el código y la estructura del proyecto RoEMU bajo el
-nombre de repositorio EoEMU. No añade una licencia global ni modifica los avisos
+nombre de repositorio RoEMU. No añade una licencia global ni modifica los avisos
 de autoría o licencias que aparezcan en los archivos originales.
 
 La visibilidad pública no concede por sí sola una licencia general para

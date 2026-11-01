@@ -1,2 +1,2 @@
 -- External guest/firmware payload omitted from the public source export.
-error("EoEMU: install your local payload for ReplicatedStorage/RiscV/FreeRTOS_RV32_QEMU_VIRT before booting", 0)
+error("RoEMU: install your local payload for ReplicatedStorage/RiscV/FreeRTOS_RV32_QEMU_VIRT before booting", 0)

@@ -16,7 +16,7 @@ archivo. No modifica el archivo de entrada.
 
 ```sh
 python tools/build_place.py --template /ruta/local/RoEMU.rbxl \
-  --preserve-payloads --output /ruta/local/EoEMU-local.rbxl
+  --preserve-payloads --output /ruta/local/RoEMU-local.rbxl
 ```
 
 La plantilla local debe tener la misma jerarquía y los módulos de esta versión.
@@ -26,5 +26,5 @@ incluyan en el repositorio.
 
 La política de `.gitignore` evita añadir por accidente los formatos comunes de
 disco/firmware y los lugares de trabajo privados. La única excepción `.rbxl`
-versionada es `templates/EoEMU-layout.rbxl`: se verificó sin fuentes ni payloads.
+versionada es `templates/RoEMU-layout.rbxl`: se verificó sin fuentes ni payloads.
 No utilices `git add -f` para incorporar binarios locales.

@@ -20,7 +20,7 @@ __pycache__/
 *.bin
 *.rbxl
 *.rbxlx
-!templates/EoEMU-layout.rbxl
+!templates/RoEMU-layout.rbxl
 *.log
 *.dmp
 *.ram

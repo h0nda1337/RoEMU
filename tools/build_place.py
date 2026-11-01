@@ -11,8 +11,8 @@ from patch_rbxl_sources import build_model_index
 ROOT=Path(__file__).resolve().parent.parent
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--template',type=Path,default=ROOT/'templates/EoEMU-layout.rbxl')
-    parser.add_argument('--output',type=Path,default=ROOT/'build/EoEMU.rbxl')
+    parser.add_argument('--template',type=Path,default=ROOT/'templates/RoEMU-layout.rbxl')
+    parser.add_argument('--output',type=Path,default=ROOT/'build/RoEMU.rbxl')
     parser.add_argument('--preserve-payloads',action='store_true')
     args=parser.parse_args()
     source=args.template.resolve();target=args.output.resolve()
@@ -27,7 +27,7 @@ def main():
         replacements.append({'path':entry['path'],'file':str(ROOT/entry['file']),
                              'expected_sha256':hashlib.sha256(row.source).hexdigest()})
     target.parent.mkdir(parents=True,exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix='eoemu-build-') as tmp:
+    with tempfile.TemporaryDirectory(prefix='roemu-build-') as tmp:
         manifest=Path(tmp)/'sources.json'
         manifest.write_text(json.dumps({'replacements':replacements}),encoding='utf-8')
         subprocess.run([sys.executable,str(ROOT/'tools/patch_rbxl_sources.py'),str(source),str(target),

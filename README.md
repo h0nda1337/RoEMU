@@ -1,4 +1,4 @@
-# EoEMU
+# RoEMU
 
 Emulador de sistemas en **Luau para Roblox**, desarrollado a partir del proyecto
 RoEMU. El repositorio conserva sus servicios, carpetas, nombres internos, scripts
@@ -30,7 +30,7 @@ src/
   StarterGui/            # Scripts de la consola y la GUI original
   StarterPlayer/         # Teclado y conexión de clientes
 templates/
-  EoEMU-layout.rbxl      # Jerarquía y GUI; fuentes y payloads vacíos
+  RoEMU-layout.rbxl      # Jerarquía y GUI; fuentes y payloads vacíos
 tools/                  # Reconstrucción verificable del lugar desde src/
 sources.json            # Relación exacta entre archivos e instancias de Roblox
 project.tree.json       # Inventario completo de las instancias originales
@@ -43,10 +43,10 @@ Se necesita Python 3.11 o posterior y Roblox Studio.
 
 ```sh
 python -m pip install -r requirements.txt
-python tools/build_place.py --output build/EoEMU.rbxl
+python tools/build_place.py --output build/RoEMU.rbxl
 ```
 
-Abre `build/EoEMU.rbxl` en Studio. La construcción restaura las fuentes de `src/`
+Abre `build/RoEMU.rbxl` en Studio. La construcción restaura las fuentes de `src/`
 sobre la plantilla sin rediseñar la GUI ni alterar las propiedades de las demás
 instancias. El arranque de un sistema operativo requiere aportar sus payloads
 locales. Los marcadores públicos no contienen un sistema arrancable.
@@ -56,7 +56,7 @@ su código conservando sus payloads, siempre hacia un **archivo nuevo**:
 
 ```sh
 python tools/build_place.py --template /ruta/local/RoEMU.rbxl \
-  --preserve-payloads --output /ruta/local/EoEMU-local.rbxl
+  --preserve-payloads --output /ruta/local/RoEMU-local.rbxl
 ```
 
 No añadas ese resultado al repositorio. Consulta [payloads locales](docs/local-payloads.md).
