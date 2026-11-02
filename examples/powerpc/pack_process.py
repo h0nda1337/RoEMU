@@ -12,6 +12,11 @@ raw[7]=0x66;struct.pack_into('>I',raw,48,0)
 entry=struct.unpack_from('>Q',raw,24)[0]
 phoff=struct.unpack_from('>Q',raw,32)[0];count=struct.unpack_from('>H',raw,56)[0]
 phs=[list(struct.unpack_from('>IIQQQQQQ',raw,phoff+i*56)) for i in range(count)]
+# GNU ld emits an empty PT_TLS at address zero for a probe without TLS data.
+# Such a placeholder is not a template and cannot be remapped into a LOAD.
+phs=[ph for ph in phs if not (ph[0]==7 and ph[5]==0 and ph[6]==0)]
+struct.pack_into('>H',raw,56,len(phs))
+for i,ph in enumerate(phs):struct.pack_into('>IIQQQQQQ',raw,phoff+i*56,*ph)
 descriptor=next(ph for ph in phs if ph[0]==1 and ph[3]<=entry and entry+24<=ph[3]+ph[5])
 at=descriptor[2]+entry-descriptor[3]
 code,toc,environment=struct.unpack_from('>QQQ',raw,at)

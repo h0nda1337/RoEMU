@@ -4,7 +4,8 @@
 -- Independent implementation of the observed PPU entry/syscall interfaces.
 local ELF=script and require(script.Parent.RoEmu_PowerPC_ELF64) or require("./RoEmu_PowerPC_ELF64")
 local Scheduler=script and require(script.Parent.RoEmu_PS3_Scheduler) or require("./RoEmu_PS3_Scheduler")
-local Process={VERSION="0.2.0"}
+local SFO=script and require(script.Parent.RoEmu_PS3_SFO) or require("./RoEmu_PS3_SFO")
+local Process={VERSION="0.3.0"}
 local function failure(code,message) return false,{code=code,message=message} end
 local function align16(value) return math.ceil(value/16)*16 end
 local function put32(data,at,value)
@@ -44,6 +45,17 @@ function Process.Load(cpu,data,options)
 	if tlsMode~="static" and tlsMode~="guest" then return failure("ps3-tls-mode","Choose static TLS or guest initialization") end
 	local priority,quantum=options.priority or 1001,options.quantum or 256
 	if type(priority)~="number" or priority%1~=0 or priority<0 or priority>3071 or type(quantum)~="number" or quantum%1~=0 or quantum<1 or quantum>65536 then return failure("ps3-scheduler-options","Invalid PPU priority/instruction quantum") end
+	local metadata,titleId=nil,""
+	if options.paramSFO~=nil then
+		local valid,report=SFO.Read(options.paramSFO)
+		if not valid then return false,report end
+		metadata=report
+		local entry=report.entries.TITLE_ID
+		if entry then
+			if entry.format~=0x0204 then return failure("ps3-sfo-title","TITLE_ID must be a PSF string") end
+			titleId=entry.value
+		end
+	end
 	local pointerBytes=align16((#argv+#envp+2)*8)
 	local reserved=pointerBytes+argBytes+envBytes
 	local ok,image=ELF.Load(cpu,data,{entryMode="ps3-ppu",stackTop=options.stackTop,stackBytes=options.stackBytes,
@@ -69,7 +81,7 @@ function Process.Load(cpu,data,options)
 		argvAddress=address,envpAddress=envAddress,tlsMode=tlsMode,tty={},ttyBytes=0,syscalls=0,
 		mutexes={},nextMutex=0x85000000,mutexCount=0,inheritCount=0,conditions={},nextCondition=0x86000000,conditionCount=0,
 		lightMutexes={},nextLightMutex=0x95000000,lightMutexCount=0,
-		allocations={},trace=options.trace==true and {} or nil,bootSupported=false,importsLinked=false}
+		allocations={},paramSFO=metadata,titleId=titleId,trace=options.trace==true and {} or nil,bootSupported=false,importsLinked=false}
 	cpu.process=state
 	Scheduler.Init(cpu,state,priority,quantum)
 	cpu.readTimeBase=function()
@@ -207,6 +219,14 @@ local function call(cpu,trap)
 		state.state="exited"
 	elseif number==1 then
 		result=state.pid
+	elseif number==30 then
+		local outHi,out=cpu:getRegister(3)
+		if state.titleId=="" then result=0x80010006
+		elseif outHi~=0 or out==0 or not access(cpu,out,64,true) then result=0x8001000D
+		else
+			buffer.fill(cpu.ram,out,0,64)
+			buffer.writestring(cpu.ram,out+1,string.sub(state.titleId,1,9))
+		end
 	elseif number==43 then state.rotate=true
 	elseif number==52 then
 		local outHi,out=cpu:getRegister(3);local paramHi,param=cpu:getRegister(4)
@@ -244,7 +264,8 @@ local function call(cpu,trap)
 				else
 					local id=state.nextThread;while state.threads[id] do id+=1 end
 					state.nextThread=id+1;state.threadCount+=1
-					local context={hi=table.create(32,0),lo=table.create(32,0),pcHi=0,pcLo=entry,lrHi=0,lrLo=cpu.loadedImage.returnAddress,ctrHi=0,ctrLo=0,cr=0,xer=0}
+					local context={hi=table.create(32,0),lo=table.create(32,0),fhi=table.create(32,0),flo=table.create(32,0),fpscr=0,
+						pcHi=0,pcLo=entry,lrHi=0,lrLo=cpu.loadedImage.returnAddress,ctrHi=0,ctrLo=0,cr=0,xer=0}
 					context.lo[2],context.lo[3],context.lo[14]=stack+stackSize-0x70,toc,tls
 					context.hi[4],context.lo[4],context.hi[5],context.lo[5]=argHi,arg,secondHi,second
 					state.threads[id]={id=id,state="created",priority=priority,context=context,stackAddress=stack,stackBytes=stackSize,joinable=flags==1,name=threadName}

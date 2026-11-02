@@ -1,12 +1,12 @@
 {
-  "scripts": 170,
+  "scripts": 171,
   "external_payload_placeholders": 67,
-  "instances": 3173,
-  "template_bytes": 106153,
+  "instances": 3174,
+  "template_bytes": 106178,
   "cleared_string_values": 2900,
   "removed_string_value_bytes": 243449810,
   "template_sources_empty": true,
   "no_guest_or_firmware_payloads": true,
   "source_paths_preserved": true,
-  "template_sha256": "21c8c41c8ae8d3fca7f7876d121eea87f23b5ae2a64a07b092f9e1d84cddb86e"
+  "template_sha256": "4db25911cf3341af5c36cbdc39987ab902360128521713e5cf64d6bc5dd36d47"
 }

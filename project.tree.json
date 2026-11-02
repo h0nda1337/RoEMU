@@ -12690,5 +12690,9 @@
   {
     "path": "ServerStorage/RoEmu_PS3_Scheduler",
     "class": "ModuleScript"
+  },
+  {
+    "path": "ServerStorage/RoEmu_PS3_SFO",
+    "class": "ModuleScript"
   }
 ]

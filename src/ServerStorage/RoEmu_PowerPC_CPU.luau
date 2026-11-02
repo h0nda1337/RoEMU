@@ -1,6 +1,6 @@
 --!native
 --!optimize 2
--- Experimental, flat-memory PowerPC64 integer subset. This is not a Cell/PS3.
+-- Experimental, flat-memory PowerPC64 subset. This is not a Cell/PS3.
 -- Registers use two 32-bit halves; no 64-bit integer passes through a double.
 local band,bor,bxor,bnot,lshift,rshift=bit32.band,bit32.bor,bit32.bxor,bit32.bnot,bit32.lshift,bit32.rshift
 local CPU={}
@@ -83,7 +83,27 @@ end
 local function writeBE(data,address,bytes,value)
 	for i=bytes-1,0,-1 do buffer.writeu8(data,address+i,band(value,255));value=math.floor(value/256) end
 end
--- X-form integer memory operations: width, store, update, signed load.
+local function singleToDouble(value)
+	local sign,exponent,fraction=band(value,0x80000000),band(rshift(value,23),255),band(value,0x7FFFFF)
+	if exponent==0 then
+		if fraction==0 then return sign,0 end
+		local shift=bit32.countlz(fraction)-8
+		fraction=band(lshift(fraction,shift),0x7FFFFF);exponent=897-shift
+	elseif exponent==255 then exponent=2047
+	else exponent+=896 end
+	return bor(sign,lshift(exponent,20),rshift(fraction,3)),lshift(fraction,29)
+end
+local function doubleToSingle(high,low)
+	local exponent=band(rshift(high,20),2047)
+	if exponent>896 then return bor(band(high,0xC0000000),lshift(band(high,0x07FFFFFF),3),rshift(low,29)) end
+	local fraction=0
+	if exponent>=874 then
+		local _,shifted=shiftRight(bor(band(high,0xFFFFF),0x100000),low,926-exponent)
+		fraction=shifted
+	end
+	return bor(band(high,0x80000000),fraction)
+end
+-- X-form memory operations: width, store, update, signed load, FPR bit transfer.
 local indexedMemory={
 	[21]={8},[53]={8,false,true},[23]={4},[55]={4,false,true},
 	[87]={1},[119]={1,false,true},[279]={2},[311]={2,false,true},
@@ -91,11 +111,16 @@ local indexedMemory={
 	[341]={4,false,false,true},[373]={4,false,true,true},
 	[149]={8,true},[181]={8,true,true},[151]={4,true},[183]={4,true,true},
 	[215]={1,true},[247]={1,true,true},[407]={2,true},[439]={2,true,true},
+	[599]={8,false,false,false,true},[631]={8,false,true,false,true},
+	[727]={8,true,false,false,true},[759]={8,true,true,false,true},
+	[535]={4,false,false,false,true},[567]={4,false,true,false,true},
+	[663]={4,true,false,false,true},[695]={4,true,true,false,true},
 }
 function CPU.new(options)
 	options=options or {}
 	local self=setmetatable({ram=buffer.create(options.ramBytes or 1024*1024),
 		hi=table.create(32,0),lo=table.create(32,0),pcHi=0,pcLo=options.entry or 0,
+		fhi=table.create(32,0),flo=table.create(32,0),fpscr=0,
 		lrHi=0,lrLo=0,ctrHi=0,ctrLo=0,cr=0,xer=0,instructions=0},CPU)
 	return self
 end
@@ -103,6 +128,12 @@ function CPU:getRegister(index) return self.hi[index+1],self.lo[index+1] end
 function CPU:setRegister(index,high,low)
 	assert(index>=0 and index<32 and index%1==0,"PowerPC GPR index")
 	self.hi[index+1],self.lo[index+1]=band(high,0xFFFFFFFF),band(low,0xFFFFFFFF)
+end
+-- Raw IEEE-754 bits, including NaN payloads; no host numeric conversion.
+function CPU:getFloatingRegister(index) return self.fhi[index+1],self.flo[index+1] end
+function CPU:setFloatingRegister(index,high,low)
+	assert(index>=0 and index<32 and index%1==0,"PowerPC FPR index")
+	self.fhi[index+1],self.flo[index+1]=band(high,0xFFFFFFFF),band(low,0xFFFFFFFF)
 end
 function CPU:load(data,address)
 	assert(typeof(data)=="buffer","flat PowerPC image must be a buffer")
@@ -255,9 +286,11 @@ function CPU:step()
 		if band(word,1)~=0 then self.lrHi,self.lrLo=nextHi,nextLo end
 		if self:branchCondition(bo,bi) then nextHi,nextLo=targetHi,targetLo end
 		end
-	elseif (op>=32 and op<=45) or op==58 or op==62 then
-		local storing=(op>=36 and op<=39) or op==44 or op==45 or op==62
+	elseif (op>=32 and op<=45) or (op>=48 and op<=55) or op==58 or op==62 then
+		local floating=op>=48 and op<=55
+		local storing=(op>=36 and op<=39) or op==44 or op==45 or op==62 or (op>=52 and op<=55)
 		local bytes=op>=40 and 2 or 4
+		if floating then bytes=band(op,2)==0 and 4 or 8 end
 		if op==34 or op==35 or op==38 or op==39 then bytes=1 end
 		local updating=op%2==1
 		local displacement=signed16(immediate)
@@ -266,13 +299,15 @@ function CPU:step()
 			if ds>1 and not (op==58 and ds==2) then return unsupported() end
 			bytes=ds==2 and 4 or 8;updating=ds==1;displacement=signed16(band(word,0xFFFC))
 		end
-		if updating and (ra==0 or (not storing and ra==rt)) then return unsupported() end
+		if updating and (ra==0 or (not storing and not floating and ra==rt)) then return unsupported() end
 		local ah,al=0,0;if ra~=0 then ah,al=self:getRegister(ra) end
 		local dh,dl=extend(displacement)
 		local high,address=add(ah,al,dh,dl)
 		if high~=0 or address%bytes~=0 or address+bytes>buffer.len(self.ram) then return fault("memory_fault","data address outside aligned flat RAM",word) end
 		if storing then
 			local vh,vl=self:getRegister(rt)
+			if floating then vh,vl=self:getFloatingRegister(rt) end
+			if floating and bytes==4 then vl=doubleToSingle(vh,vl) end
 			self:invalidateReservation(address,bytes)
 			if bytes==8 then writeBE(self.ram,address,4,vh);writeBE(self.ram,address+4,4,vl)
 			else writeBE(self.ram,address,bytes,vl) end
@@ -284,7 +319,10 @@ function CPU:step()
 				if op==42 or op==43 then vh,vl=extend(signed16(vl))
 				elseif op==58 then vh,vl=extend(vl>=0x80000000 and vl-U32 or vl) end
 			end
-			self:setRegister(rt,vh,vl)
+			if floating then
+				if bytes==4 then vh,vl=singleToDouble(vl) end
+				self:setFloatingRegister(rt,vh,vl)
+			else self:setRegister(rt,vh,vl) end
 		end
 		if updating then self:setRegister(ra,high,address) end
 	elseif op==31 then
@@ -293,6 +331,10 @@ function CPU:step()
 		local memory=indexedMemory[xo]
 		if word==0x7C0004AC or word==0x7C2004AC or word==0x7C0006AC then
 			-- sync/lwsync/eieio: all implemented memory/device effects are ordered.
+		elseif xo==246 or xo==278 then
+			if band(word,1)~=0 then return unsupported() end
+			-- dcbt/dcbtst are prefetch hints, with no architectural data access.
+			-- Flat uncached RAM needs no fill and must not fault on the hint EA.
 		elseif xo==20 or xo==84 or xo==150 or xo==214 then
 			local storing=xo==150 or xo==214
 			local bytes=(xo==84 or xo==214) and 8 or 4
@@ -316,14 +358,16 @@ function CPU:step()
 				self.reservation={address=address,bytes=bytes,granule=math.floor(address/128)*128,high=vh,low=vl}
 			end
 		elseif memory then
-			local bytes,storing,updating,signed=memory[1],memory[2],memory[3],memory[4]
-			if band(word,1)~=0 or (updating and (ra==0 or (not storing and ra==rt))) then return unsupported() end
+			local bytes,storing,updating,signed,floating=memory[1],memory[2],memory[3],memory[4],memory[5]
+			if band(word,1)~=0 or (updating and (ra==0 or (not storing and not floating and ra==rt))) then return unsupported() end
 			local ah,al=0,0;if ra~=0 then ah,al=self:getRegister(ra) end
 			local bh,bl=self:getRegister(rb)
 			local addressHi,address=add(ah,al,bh,bl)
 			if addressHi~=0 or address%bytes~=0 or address+bytes>buffer.len(self.ram) then return fault("memory_fault","indexed address outside aligned flat RAM",word) end
 			if storing then
 				local vh,vl=self:getRegister(rt)
+				if floating then vh,vl=self:getFloatingRegister(rt) end
+				if floating and bytes==4 then vl=doubleToSingle(vh,vl) end
 				self:invalidateReservation(address,bytes)
 				if bytes==8 then writeBE(self.ram,address,4,vh);writeBE(self.ram,address+4,4,vl)
 				else writeBE(self.ram,address,bytes,vl) end
@@ -336,7 +380,10 @@ function CPU:step()
 						if bytes==2 then vh,vl=extend(signed16(vl)) else vh,vl=extend(vl>=0x80000000 and vl-U32 or vl) end
 					end
 				end
-				self:setRegister(rt,vh,vl)
+				if floating then
+					if bytes==4 then vh,vl=singleToDouble(vl) end
+					self:setFloatingRegister(rt,vh,vl)
+				else self:setRegister(rt,vh,vl) end
 			end
 			if updating then self:setRegister(ra,addressHi,address) end
 		elseif xo==19 or xo==144 then
@@ -504,6 +551,15 @@ function CPU:step()
 			end
 		else return unsupported() end
 		if (xo==28 or xo==444 or xo==316 or xo==124) and band(word,1)~=0 then self:record(high,low) end
+	elseif op==63 then
+		local xo=band(rshift(word,1),1023)
+		if ra~=0 or (xo~=40 and xo~=72 and xo~=136 and xo~=264) then return unsupported() end
+		local high,low=self:getFloatingRegister(rb)
+		if xo==40 then high=bxor(high,0x80000000)
+		elseif xo==136 then high=bor(high,0x80000000)
+		elseif xo==264 then high=band(high,0x7FFFFFFF) end
+		self:setFloatingRegister(rt,high,low)
+		if band(word,1)~=0 then self.cr=bor(band(self.cr,0xF0FFFFFF),lshift(rshift(self.fpscr,28),24)) end
 	else return unsupported() end
 	self.pcHi,self.pcLo=nextHi,nextLo
 	self.instructions+=1

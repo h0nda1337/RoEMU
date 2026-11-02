@@ -40,7 +40,8 @@ void roemu_entry(u64 argc,const char **argv,const char **envp,u64 envc,u64 main_
     struct { u32 protocol,recursive,shared,adaptive;u64 key;u32 flags,pad;u64 name; } mutex={1,0x10,0x200,0x2000,0,0,0,0};
     struct { u32 shared,flags;u64 key,name; } condition={0x200,0,0,0};
     struct { u32 entry,tls; } param={(u32)(u64)&worker,0};
-    int inherit=argc>1 && argv[1][0]=='I';
+    int inherit=0;
+    for (u64 i=1;i<argc;i++) if (argv[i][0]=='I') inherit=1;
     if (inherit) mutex.protocol=3;
     if (!__sync_bool_compare_and_swap(&atomic_value,0x0020000000000001ULL,0x002000000000002AULL)) finish(38);
     if (__sync_bool_compare_and_swap(&atomic_value,0x0020000000000001ULL,0) || atomic_value!=0x002000000000002AULL) finish(39);
@@ -92,7 +93,10 @@ void roemu_entry(u64 argc,const char **argv,const char **envp,u64 envc,u64 main_
     if (CALL(141,1000,0,0)) finish(41);
     __asm__ volatile("mftb %0" : "=r"(after));
     if (after-before<80000) finish(43);
+    static const char inherited_message[]="ROEMU_PPU_THREADS_COND_INHERIT_OK\n";
+    const char *output=inherit?inherited_message:message;
+    u32 length=inherit?sizeof(inherited_message)-1:sizeof(message)-1;
     u32 written=0;
-    if (invoke(403,0,(u64)message,sizeof(message)-1,(u64)&written,0,0,0,0) || written!=sizeof(message)-1) finish(16);
+    if (invoke(403,0,(u64)output,length,(u64)&written,0,0,0,0) || written!=length) finish(16);
     finish(42);
 }

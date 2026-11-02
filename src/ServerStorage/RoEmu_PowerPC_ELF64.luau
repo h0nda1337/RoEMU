@@ -140,7 +140,8 @@ function ELF.Load(cpu,data,options)
 		buffer.fill(cpu.ram,tls.allocation,0,tls.allocationBytes)
 		buffer.copy(cpu.ram,tls.dataAddress,data,tls.offset,tls.fileBytes)
 	end
-	for index=0,31 do cpu:setRegister(index,0,0) end
+	for index=0,31 do cpu:setRegister(index,0,0);cpu:setFloatingRegister(index,0,0) end
+	cpu.fpscr=0
 	cpu:setRegister(1,0,stackTop-stackReserved-0x70);cpu:setRegister(2,0,toc);cpu:setRegister(11,0,environment)
 	if tls and tls.threadPointer then cpu:setRegister(13,0,tls.threadPointer) end
 	if mode=="direct" then cpu:setRegister(12,0,code) end

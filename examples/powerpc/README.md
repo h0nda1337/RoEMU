@@ -73,8 +73,10 @@ mediante difusión, recupera mutex recursivos después de una señal y un
 vencimiento, y une los hilos con resultados de 64 bits. También verifica mutex
 ligeros, CAS de 64 bits y el contador de tiempo. La entrada adicional `I`
 selecciona el protocolo de herencia de prioridad y un hijo de prioridad superior.
-Ambas variantes imprimen `ROEMU_PPU_THREADS_COND_OK` y salen con estado 42 en
-RoEMU y en la referencia HLE de RPCS3.
+El perfil básico imprime `ROEMU_PPU_THREADS_COND_OK`; el de herencia imprime
+`ROEMU_PPU_THREADS_COND_INHERIT_OK`. Ambos salen con estado 42 en RoEMU y en
+la referencia HLE de RPCS3. La búsqueda del argumento admite el elemento vacío
+que RPCS3 inserta antes de los argumentos adicionales.
 
 Para esta muestra con llamadas entre funciones se necesita un enlazador que
 soporte ELFv1, como GNU Binutils para PowerPC64. LLD retiró ese soporte;
@@ -96,8 +98,32 @@ luau --codegen -O2 tests/powerpc_atomic.luau
 ```
 
 Referencia de construcción: Clang 19.1.7 y GNU ld 2.44. La muestra compacta
-tiene 4 808 bytes. `pack_process.py` adapta los descriptores `.opd` usados por
+tiene 4 920 bytes. `pack_process.py` adapta los descriptores `.opd` usados por
 estas muestras para entregarlos a LV2. Es una adaptación de programas propios
 sin SDK ni libc; no convierte de forma general llamadas indirectas ELFv1 en
 llamadas indirectas con ABI PS3. El archivo compilado y los fixtures proceden
 exclusivamente de este código propio.
+
+## Metadatos SFO y registros de coma flotante
+
+`metadata.c` comprueba la llamada 30 y cada byte del bloque de salida: sin
+metadatos espera `CELL_ENOENT` y un búfer intacto; con el argumento `T` espera
+el identificador sintético `ROEM00001`. Se compila con las mismas opciones y
+GNU ld del ejemplo de hilos, sustituyendo `threads.c` por `metadata.c`. No
+necesita TLS; el empaquetador omite el encabezado PT_TLS vacío de GNU ld.
+La muestra compacta propia tiene 680 bytes.
+
+`LoadProcess` recibe el `PARAM.SFO` propio mediante `options.paramSFO`. Para
+la referencia RPCS3, el archivo propio se coloca junto a `USRDIR`, contiene
+`CATEGORY=HG`, `TITLE_ID=ROEM00001` y un título de prueba. No incluye metadatos
+extraídos de un juego. Los fixtures generan esos datos dentro de las pruebas.
+
+```sh
+luau --codegen -O2 tests/powerpc_metadata.luau
+luau --codegen -O2 tests/powerpc_fpr.luau
+```
+
+Los vectores FPR son operandos sintéticos contrastados con QEMU 970. Comprueban
+transferencias de bits y cambios de signo, incluidos NaN y subnormales. El
+programa compilado de hilos también verifica el aislamiento de los 32 FPR y
+FPSCR durante cambios reales de contexto. No se implementa aritmética FPU.

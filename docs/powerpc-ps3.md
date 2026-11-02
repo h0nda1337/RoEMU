@@ -20,18 +20,28 @@ consume la selección de arquitectura: después se puede elegir RV32 o i386.
   multiplicación/división enteras exactas, extensión de signo y manipulación CR.
 - Reservas `lwarx`/`ldarx`, escrituras condicionales y barreras en el modelo de
   memoria ordenada, además de lectura exacta del contador de tiempo.
+- Transferencias de los 32 FPR como bits exactos: cargas/almacenamientos
+  simples y dobles, indexados y con actualización; `fmr`, `fneg`, `fabs`,
+  `fnabs` y sus formas con CR1. Los movimientos dobles conservan los bits de NaN.
+- Precargas `dcbt`/`dcbtst` sin acceso arquitectónico a la dirección sugerida.
 - Presupuestos de ejecución y resultados explícitos para instrucciones o
   direcciones que todavía no soporta.
 
 La memoria es una ventana de RAM plana, no un espacio virtual completo de
 64 bits. Los accesos exigen alineación natural. Los fallos se devuelven al
 anfitrión; todavía no se entregan como excepciones arquitectónicas al invitado.
-No se implementan privilegios, MMU, FPU, AltiVec ni el juego completo de instrucciones.
+No se implementan privilegios, MMU, aritmética FPU, AltiVec ni el juego completo
+de instrucciones. Los movimientos FPR no implican soporte de operaciones numéricas.
+La actualización de CR1 en `fmr.` sigue los bits de estado documentados por
+[IBM](https://www.ibm.com/docs/en/aix/7.2.0?topic=set-fmr-floating-move-register-instruction).
 
 `RoEmu_PowerPC_Platform.SelfTest()` ejecuta instrucciones reales de prueba y
 comprueba suma, memoria, bucle y precisión de 64 bits. En la validación local,
 5 875 casos del subconjunto se contrastaron con un procesador 970 de QEMU,
 además de 120 secuencias de reserva/escritura condicional y barreras.
+Otros 729 casos contrastan transferencias FPR y precargas, incluidos ceros con
+signo, subnormales, infinitos y NaN señalizadores. Las conversiones de formato
+en memoria son operaciones de bits de la ISA; no ejecutan aritmética del host.
 Ese contraste no certifica una implementación de Cell ni de toda PowerPC.
 
 `RoEmu_PowerPC_ELF64` carga ELF64 big endian estáticos (`ET_EXEC`, `EM_PPC64`)
@@ -59,6 +69,8 @@ local cpu = Platform.new({ ramBytes = 1024 * 1024, entry = 0 })
 -- cpu:load(bufferConProgramaPropio, direccionAlineada)
 -- cpu:setRegister(numero, palabraAlta, palabraBaja)
 -- cpu:getRegister(numero) -> palabraAlta, palabraBaja
+-- cpu:setFloatingRegister(numero, bitsAltos, bitsBajos)
+-- cpu:getFloatingRegister(numero) -> bitsAltos, bitsBajos
 -- cpu:step() / cpu:run(presupuesto)
 
 local loaded, image = Platform.LoadELF(cpu, bufferConELFPropio)
@@ -104,6 +116,8 @@ llamada implementada y avanza PC/contador. Una llamada desconocida devuelve
 `unimplemented_syscall`, conservando el punto de parada. Se implementan:
 
 - Identificador de proceso (1), salida (22) y escritura TTY (403).
+- Parámetros SFO (30): devuelve el bloque de 64 bytes con el identificador
+  real del título o `CELL_ENOENT` si falta, sin modificar entonces el búfer.
 - Mutex privados: crear/destruir/bloquear/intentar/desbloquear (100–104),
   propietario, recursión, colas FIFO/prioridad, herencia de prioridad y errores.
 - Condiciones privadas (105–110): asociación al mutex, espera con liberación
@@ -122,6 +136,20 @@ Los errores CELL se extienden con signo a los 64 bits del registro de retorno.
 Los punteros usados por estos servicios se validan contra los segmentos, pila,
 TLS y reservas activas. La CPU sigue usando memoria plana: esto no implementa
 una MMU ni todas las protecciones de acceso del hardware PS3.
+
+`LoadProcess` admite `paramSFO` como búfer o cadena de bytes de un `PARAM.SFO`
+aportado por quien llama. `RoEmu_PS3_SFO.Read` valida PSF 1.01, índices y límites
+antes de cargar el proceso; admite texto, enteros little endian y datos binarios.
+El límite es 1 MiB y 4 096 entradas. Los formatos desconocidos se rechazan
+explícitamente. Los valores se copian al estado del proceso y nunca se inventa
+un `TITLE_ID` predeterminado. No se accede a archivos del host desde Luau.
+
+La prueba C propia `metadata.c` verifica el resultado y todos los bytes del
+búfer, con metadatos presentes y ausentes, tanto en RoEMU como en RPCS3. Las
+pruebas incluyen archivos truncados, punteros inválidos y rechazo de una carga
+sin alterar un proceso existente. El planificador guarda los 32 FPR y FPSCR
+por hilo; otro ensayo verifica su aislamiento durante 311 cambios de contexto
+en un programa compilado de cuatro hilos. `floatingArithmetic` sigue en `false`.
 
 La prueba C de proceso imprime `ROEMU_PPU_TLS_ARGS_OK` y termina con estado 42
 tanto en RoEMU como en la entrada directa HLE de RPCS3. Hay 104 comprobaciones
@@ -163,6 +191,9 @@ unión, errores, mutex ligeros, operaciones atómicas y contador de tiempo.
 Termina con el mismo mensaje y estado 42 en RoEMU y RPCS3. Se comprueba con
 seis tamaños de quantum y dos perfiles de prioridad (577 comprobaciones),
 además de 19 comprobaciones de espera y 32 de reservas/contador/barreras.
+El programa busca el argumento de perfil entre todos los argumentos y emite
+un mensaje distinto para herencia de prioridad. Así se comprueba el perfil
+realmente ejecutado incluso con el argumento vacío que inserta RPCS3.
 
 ## Referencia RPCS3
 
@@ -187,9 +218,10 @@ implementa automáticamente el arranque de firmware, LV1/LV2 o GameOS en Luau.
 
 La inspección local de `vsh.self` 4.93 mediante RPCS3 permitió obtener su ELF
 y probarlo contra el motor real de RoEMU. Con inicialización TLS a cargo del
-invitado, VSH ejecuta 4 453 instrucciones, crea mutex y condiciones, usa
-operaciones atómicas y obtiene reservas de memoria. Se detiene en la llamada
-30 (`_sys_process_get_paramsfo`), todavía no implementada. No llega a la
+invitado y sin inventar metadatos de título, VSH ejecuta 34 336 instrucciones,
+crea mutex y condiciones, usa operaciones atómicas, reservas de memoria y
+transferencias FPR. Se detiene en `fcfid`, conversión numérica aún pendiente,
+en PC `0x0034DE0C`. No llega a la
 interfaz ni al arranque completo de GameOS. El
 firmware no se incluye en los ejemplos, la plantilla ni el lugar distribuible.
 

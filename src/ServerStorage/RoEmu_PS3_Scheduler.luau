@@ -2,14 +2,17 @@
 --!optimize 2
 -- Deterministic single-PPE context scheduling. Not Cell SMT or cycle accuracy.
 local Scheduler={}
-local fields={"pcHi","pcLo","lrHi","lrLo","ctrHi","ctrLo","cr","xer"}
+local fields={"pcHi","pcLo","lrHi","lrLo","ctrHi","ctrLo","cr","xer","fpscr"}
 function Scheduler.Capture(cpu)
-	local context={hi=table.clone(cpu.hi),lo=table.clone(cpu.lo)}
+	local context={hi=table.clone(cpu.hi),lo=table.clone(cpu.lo),fhi=table.clone(cpu.fhi),flo=table.clone(cpu.flo)}
 	for _,field in ipairs(fields) do context[field]=cpu[field] end
 	return context
 end
 function Scheduler.Restore(cpu,context)
-	for i=1,32 do cpu.hi[i],cpu.lo[i]=context.hi[i],context.lo[i] end
+	for i=1,32 do
+		cpu.hi[i],cpu.lo[i]=context.hi[i],context.lo[i]
+		cpu.fhi[i],cpu.flo[i]=context.fhi[i],context.flo[i]
+	end
 	for _,field in ipairs(fields) do cpu[field]=context[field] end
 end
 function Scheduler.Init(cpu,state,priority,quantum)

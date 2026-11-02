@@ -714,6 +714,12 @@
     "external_payload": false
   },
   {
+    "path": "ServerStorage/RoEmu_PS3_SFO",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_PS3_SFO.luau",
+    "external_payload": false
+  },
+  {
     "path": "ServerScriptService/RunSModeDemo",
     "class": "Script",
     "file": "src/ServerScriptService/RunSModeDemo.luau",
