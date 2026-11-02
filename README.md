@@ -9,6 +9,8 @@ y la distribución de la interfaz original.
 - Motor RISC-V RV32 con MMU Sv32, interrupciones CLINT/PLIC, UART y virtio-blk.
 - Motor PC i386: modos real, protegido y virtual 8086, segmentación, paginación,
   excepciones, PIC, PIT/RTC, PS/2, ATA PIO y PCI.
+- Base PowerPC64 con registros exactos y un subconjunto entero comprobado.
+  El selector ofrece el perfil PS3 en desarrollo; **CellOS/GameOS aún no arranca**.
 - VGA por planos y framebuffer VBE, hasta 1024 × 768, paleta del invitado,
   actualizaciones parciales de vídeo y ratón absoluto compatible con VMware.
 - Consola, teclado, selector de arquitectura y módulos para conectar interfaces.
@@ -75,5 +77,7 @@ El PC no dispone de red de invitado ni de una implementación completa de toda
 la arquitectura x86.
 
 Lee [la arquitectura](docs/architecture.md) y [cómo contribuir](CONTRIBUTING.md).
+El estado de PowerPC y lo que falta para PS3 se detalla en
+[PowerPC64 y perfil PS3](docs/powerpc-ps3.md).
 Las licencias y atribuciones existentes se mantienen; no se ha asignado una
 licencia global nueva al código. Consulta [NOTICE.md](NOTICE.md).

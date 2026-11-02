@@ -684,6 +684,18 @@
     "external_payload": false
   },
   {
+    "path": "ServerStorage/RoEmu_PowerPC_CPU",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_PowerPC_CPU.luau",
+    "external_payload": false
+  },
+  {
+    "path": "ServerStorage/RoEmu_PowerPC_Platform",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_PowerPC_Platform.luau",
+    "external_payload": false
+  },
+  {
     "path": "ServerScriptService/RunSModeDemo",
     "class": "Script",
     "file": "src/ServerScriptService/RunSModeDemo.luau",

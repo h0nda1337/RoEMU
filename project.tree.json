@@ -12670,5 +12670,13 @@
   {
     "path": "ServerStorage/RoEmu_PC_FrameStream",
     "class": "ModuleScript"
+  },
+  {
+    "path": "ServerStorage/RoEmu_PowerPC_CPU",
+    "class": "ModuleScript"
+  },
+  {
+    "path": "ServerStorage/RoEmu_PowerPC_Platform",
+    "class": "ModuleScript"
   }
 ]

@@ -26,11 +26,20 @@ de instrucciones se renuevan por instrucción para respetar código modificado.
 `ReplicatedStorage/RoEmu_PC_Pixels` reutiliza el búfer RGBA y una tabla de paleta.
 `RoEmu_PC_VideoClient` presenta el framebuffer real del invitado.
 
+## PowerPC64 / PS3
+
+`RoEmu_PowerPC_CPU` y `RoEmu_PowerPC_Platform` exponen una base entera PowerPC64
+con RAM plana y una prueba de instrucciones. El perfil PS3 no es arrancable y
+declara por separado las capacidades que faltan. Consulta
+[PowerPC64 y perfil PS3](powerpc-ps3.md).
+
 ## Conectar una interfaz
 
 El controlador ofrece `Choose("rv32")`, `Choose("i386")` y `Status()` desde el
 servidor. Se selecciona una arquitectura por sesión; la máquina PC es compartida
 por los jugadores de ese servidor.
+`Choose("powerpc")` consulta el perfil aún no arrancable y devuelve un estado
+explícito sin impedir la selección posterior de otra arquitectura.
 
 `ReplicatedStorage.RoEmu_PCVideo` transporta:
 

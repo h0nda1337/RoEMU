@@ -5,6 +5,7 @@ local Players = game:GetService("Players")
 local Platform = require(script.Parent:WaitForChild("RoEmu_i386_Platform"))
 local Disk = require(script.Parent:WaitForChild("RoEmu_Win95DiskMetadata"))
 local PC = require(script.Parent:WaitForChild("RoEmu_PC_Runtime"))
+local PowerPC = require(script.Parent:WaitForChild("RoEmu_PowerPC_Platform"))
 
 local Controller = {}
 local initialized = false
@@ -39,6 +40,7 @@ end
 
 function Controller.Status()
 	local result = table.clone(state)
+	result.powerpc = PowerPC.Status()
 	local runtime = rawget(_G, "RoEmu")
 	local pc = runtime and runtime.PCStatus
 	if pc then result.pc = { phase = pc.phase, instructions = pc.instructions, reads = pc.reads,
@@ -57,8 +59,9 @@ function Controller.Status()
 end
 
 function Controller.Choose(architecture, player)
-	if architecture ~= "rv32" and architecture ~= "i386" then
-		return false, { code = "bad-architecture", message = "Elige RV32 o i386." }
+	if architecture == "ppc64" then architecture = "powerpc" end
+	if architecture ~= "rv32" and architecture ~= "i386" and architecture ~= "powerpc" then
+		return false, { code = "bad-architecture", message = "Elige RV32, i386 o PowerPC." }
 	end
 	if state.started then
 		if (architecture == "rv32" and state.architecture == "riscv32") or (architecture == "i386" and state.architecture == "i386") then
@@ -66,6 +69,7 @@ function Controller.Choose(architecture, player)
 		end
 		return false, { code = "already-started", message = "La maquina ya esta iniciada. Reinicia la prueba para cambiar de arquitectura." }
 	end
+	if architecture == "powerpc" then return PowerPC.AttemptBoot() end
 	if architecture == "i386" then
         local runtime = rawget(_G, "RoEmu")
         if runtime and type(runtime.InputQueue) == "table" then table.clear(runtime.InputQueue) end

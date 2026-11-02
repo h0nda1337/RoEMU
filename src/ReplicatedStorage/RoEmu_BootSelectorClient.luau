@@ -25,6 +25,7 @@ function Selector.Mount()
 		card = Color3.fromRGB(25, 31, 48), text = Color3.fromRGB(239, 244, 255),
 		muted = Color3.fromRGB(148, 160, 183), cyan = Color3.fromRGB(106, 226, 213),
 		blue = Color3.fromRGB(147, 170, 255), line = Color3.fromRGB(48, 59, 79),
+		purple = Color3.fromRGB(205, 170, 255),
 	}
 	local function make(className, parent, properties)
 		local object = Instance.new(className)
@@ -73,24 +74,29 @@ function Selector.Mount()
 	text(panel, "Brand", "RoEMU", 78, 28, 180, 34, 24, palette.text, Enum.Font.GothamBold)
 	text(panel, "Edition", "LOCAL BUILD", 540, 32, 148, 24, 11, palette.muted, Enum.Font.GothamMedium)
 	text(panel, "Title", "Elige tu arquitectura", 32, 91, 656, 44, 32, palette.text, Enum.Font.GothamBold)
-	text(panel, "Subtitle", "Dos caminos. Una maquina por descubrir.", 32, 140, 656, 26, 15, palette.muted)
+	text(panel, "Subtitle", "Elige una plataforma para explorar.", 32, 140, 656, 26, 15, palette.muted)
 	local selected = "rv32"
 	local busy = false
 	local cards = {}
+	local choices={
+		rv32={start="Arrancar RV32   →",retry="Arrancar RV32   →",hint="OpenSBI, CaribeBootX y la consola de CaribeOS."},
+		i386={start="Intentar Windows 95   →",retry="Reintentar Windows 95   →",hint="Se ejecutara el cargador del disco en el procesador emulado."},
+		powerpc={start="Ver estado de PowerPC / PS3   →",retry="Ver estado de PowerPC / PS3   →",hint="Base PowerPC64 en desarrollo. CellOS/GameOS todavia no arranca."},
+	}
 	local function card(id, x, heading, title, description, badge, accent)
 		local button = make("TextButton", panel, {
-			Name = id == "rv32" and "RV32Card" or "I386Card", Text = "", AutoButtonColor = false,
-			Position = UDim2.fromOffset(x, 192), Size = UDim2.fromOffset(318, 168),
+			Name = ({rv32="RV32Card",i386="I386Card",powerpc="PowerPCCard"})[id], Text = "", AutoButtonColor = false,
+			Position = UDim2.fromOffset(x, 192), Size = UDim2.fromOffset(208, 168),
 			BackgroundColor3 = palette.card, BorderSizePixel = 0, Selectable = true,
 		})
 		round(button, 14)
 		local stroke = make("UIStroke", button, { Color = palette.line, Thickness = 1 })
-		text(button, "Architecture", heading, 18, 15, 235, 31, 26, accent, Enum.Font.GothamBold)
-		text(button, "Guest", title, 18, 54, 280, 24, 17, palette.text, Enum.Font.GothamMedium)
-		text(button, "Description", description, 18, 84, 280, 30, 12, palette.muted)
-		text(button, "Badge", badge, 18, 130, 280, 20, 11, accent, Enum.Font.GothamMedium)
+		text(button, "Architecture", heading, 18, 15, 155, 31, 26, accent, Enum.Font.GothamBold)
+		text(button, "Guest", title, 18, 54, 172, 24, 17, palette.text, Enum.Font.GothamMedium)
+		text(button, "Description", description, 18, 84, 172, 36, 12, palette.muted)
+		text(button, "Badge", badge, 18, 130, 172, 20, 11, accent, Enum.Font.GothamMedium)
 		local dot = make("Frame", button, {
-			Name = "Selected", Position = UDim2.fromOffset(281, 22), Size = UDim2.fromOffset(12, 12),
+			Name = "Selected", Position = UDim2.fromOffset(178, 22), Size = UDim2.fromOffset(12, 12),
 			BorderSizePixel = 0, BackgroundColor3 = accent, Visible = false,
 		})
 		round(dot, 6)
@@ -98,7 +104,8 @@ function Selector.Mount()
 		return button
 	end
 	local rv = card("rv32", 32, "RV32", "CaribeOS", "OpenSBI  /  XNU RV32  /  GNU Bash", "LISTO PARA ARRANCAR", palette.cyan)
-	local x86 = card("i386", 370, "i386", "Windows 95", "Intel x86  /  Disco de prueba local", "ARRANQUE EXPERIMENTAL", palette.blue)
+	local x86 = card("i386", 256, "i386", "Windows 95", "Intel x86  /  Disco de prueba local", "ARRANQUE EXPERIMENTAL", palette.blue)
+	local ppc = card("powerpc", 480, "PowerPC", "CellOS / GameOS", "PS3  /  Cell PPE + SPE  /  RSX", "EN DESARROLLO", palette.purple)
 	local status = text(panel, "Status", "El arranque comienza cuando tu lo decides.", 32, 374, 656, 53, 12, palette.muted)
 	status.TextYAlignment = Enum.TextYAlignment.Top
 	local start = make("TextButton", panel, {
@@ -117,14 +124,14 @@ function Selector.Mount()
 				Thickness = key == id and 2 or 1,
 			}):Play()
 		end
-		start.Text = id == "rv32" and "Arrancar RV32   →" or "Intentar Windows 95   →"
+		start.Text = choices[id].start
 		start.BackgroundColor3 = cards[id].accent
-		status.Text = id == "rv32" and "OpenSBI, CaribeBootX y la consola de CaribeOS."
-			or "Se ejecutara el cargador del disco en el procesador emulado."
+		status.Text = choices[id].hint
 		status.TextColor3 = palette.muted
 	end
 	rv.Activated:Connect(function() select("rv32") end)
 	x86.Activated:Connect(function() select("i386") end)
+	ppc.Activated:Connect(function() select("powerpc") end)
 	select("rv32")
 	local bootFolder
 	local rpc
@@ -149,9 +156,12 @@ function Selector.Mount()
 		if closed then return end
 		if ok and accepted then close() return end
 		busy = false
-		start.Text = selected == "rv32" and "Arrancar RV32   →" or "Reintentar Windows 95   →"
+		start.Text = choices[selected].retry
 		status.TextColor3 = Color3.fromRGB(255, 200, 142)
-		if ok and type(reply) == "table" and reply.code == "pc-platform-incomplete" then
+		if ok and type(reply)=="table" and reply.code=="powerpc-platform-incomplete" then
+			status.TextColor3=palette.purple
+			status.Text=tostring(reply.message)
+		elseif ok and type(reply) == "table" and reply.code == "pc-platform-incomplete" then
 			status.Text = "Windows 95 aun no arranca: faltan modo real, paginacion, BIOS y dispositivos PC. Puedes iniciar RV32."
 		else
 			status.Text = ok and type(reply) == "table" and tostring(reply.message or reply.code)
