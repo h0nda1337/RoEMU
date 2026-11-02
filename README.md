@@ -9,7 +9,8 @@ y la distribución de la interfaz original.
 - Motor RISC-V RV32 con MMU Sv32, interrupciones CLINT/PLIC, UART y virtio-blk.
 - Motor PC i386: modos real, protegido y virtual 8086, segmentación, paginación,
   excepciones, PIC, PIT/RTC, PS/2, ATA PIO y PCI.
-- Base PowerPC64 con registros exactos y un subconjunto entero comprobado.
+- Base PowerPC64 con registros exactos, rotaciones/desplazamientos y carga ELF64
+  estática comprobada con un programa C propio.
   El selector ofrece el perfil PS3 en desarrollo; **CellOS/GameOS aún no arranca**.
 - VGA por planos y framebuffer VBE, hasta 1024 × 768, paleta del invitado,
   actualizaciones parciales de vídeo y ratón absoluto compatible con VMware.

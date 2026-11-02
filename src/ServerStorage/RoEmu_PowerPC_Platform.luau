@@ -1,7 +1,8 @@
 --!optimize 2
 -- Headless PowerPC64 foundation and an explicit, currently unavailable PS3 profile.
 local CPU=script and require(script.Parent.RoEmu_PowerPC_CPU) or require("./RoEmu_PowerPC_CPU")
-local Platform={VERSION="0.1.0",ARCH="powerpc64"}
+local ELF=script and require(script.Parent.RoEmu_PowerPC_ELF64) or require("./RoEmu_PowerPC_ELF64")
+local Platform={VERSION="0.2.0",ARCH="powerpc64"}
 Platform.CAPABILITIES={
 	schema=1,architecture="powerpc64",profile="ps3-cell",endianness="big",
 	maturity="integer-subset",headless=true,flatBinary=true,
@@ -9,14 +10,26 @@ Platform.CAPABILITIES={
 	cpu={registerBits=64,exactIntegerPairs=true,integerSubset=true,completeISA=false,
 		mmu=false,privilegedMode=false,floatingPoint=false,altivec=false,smt=false,spu=false},
 	devices={flatRAM=true,rsx=false,ps3Storage=false,interruptController=false,usb=false,audio=false},
-	loaders={elf64=false,self=false,pup=false},
+	loaders={elf64=true,staticExecOnly=true,elfv1Descriptor=true,ps3PPUDescriptor=true,self=false,pup=false},
 	ps3={lv1=false,lv2=false,secureBoot=false,cellOS=false,gameOS=false,bootSupported=false},
 }
 function Platform.new(options) return CPU.new(options) end
+function Platform.LoadELF(cpu,data,options) return ELF.Load(cpu,data,options) end
+function Platform.RunStandalone(cpu,budget)
+	if not cpu.loadedImage then return {kind="no-image",detail="Load a standalone ELF first"} end
+	if type(budget)~="number" or budget%1~=0 or budget<1 or budget>1000000 then return {kind="bad-budget"} end
+	for _=1,budget do
+		if cpu.instructions>0 and cpu.pcHi==0 and cpu.pcLo==cpu.loadedImage.returnAddress then return {kind="returned",instructions=cpu.instructions} end
+		local result=cpu:step()
+		if result.kind~="ok" then return result end
+	end
+	if cpu.pcHi==0 and cpu.pcLo==cpu.loadedImage.returnAddress then return {kind="returned",instructions=cpu.instructions} end
+	return {kind="budget",instructions=cpu.instructions,pcHi=cpu.pcHi,pcLo=cpu.pcLo}
+end
 function Platform.Status()
 	return {architecture=Platform.ARCH,profile="ps3-cell",phase="not-bootable",
 		bootSupported=false,cellOSSupported=false,gameOSSupported=false,
-		integerSubsetImplemented=true,firmwareIncluded=false,
+		integerSubsetImplemented=true,standaloneELF64=true,firmwareIncluded=false,
 		missing={"complete PPE/PowerPC64 ISA and MMU","Cell SPE/SPU and MFC/DMA",
 			"RSX graphics","PS3 interrupt and storage devices","LV1/LV2 and PS3 boot platform"}}
 end

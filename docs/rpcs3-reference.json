@@ -1,0 +1,17 @@
+{
+  "repository": "https://github.com/RPCS3/rpcs3",
+  "commit": "ad468a13f6374f364467a9e4988e95938c37bb42",
+  "version": "0.0.43-20551-ad468a13 Alpha",
+  "windowsArchiveSha256": "41bcdaca12a15a10503dffecee67df47847de1f0b1ba8735e81f4d20354673e6",
+  "sourceRetainedLocally": true,
+  "upstreamCodeIncludedInRoEMU": false,
+  "purpose": "ABI reference and independent execution of our own compiled PowerPC64 diagnostic",
+  "referenceResult": {
+    "firmwareVersion": "4.93",
+    "firmwareIncludedInRepository": false,
+    "checksum": "0103456689ABCDFB",
+    "processExitStatus": 42,
+    "referenceHostProcessExitCode": 0,
+    "gameOSBootVerified": false
+  }
+}

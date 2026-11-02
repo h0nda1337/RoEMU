@@ -12,6 +12,36 @@ local function add(ah,al,bh,bl)
 end
 local function signed16(value) return value>=32768 and value-65536 or value end
 local function extend(value) return value<0 and 0xFFFFFFFF or 0,band(value,0xFFFFFFFF) end
+local function shiftLeft(high,low,amount)
+	if amount==0 then return high,low elseif amount>=64 then return 0,0
+	elseif amount>=32 then return lshift(low,amount-32),0 end
+	return bor(lshift(high,amount),rshift(low,32-amount)),lshift(low,amount)
+end
+local function shiftRight(high,low,amount)
+	if amount==0 then return high,low elseif amount>=64 then return 0,0
+	elseif amount>=32 then return 0,rshift(high,amount-32) end
+	return rshift(high,amount),bor(rshift(low,amount),lshift(high,32-amount))
+end
+local function rotate(high,low,amount)
+	if amount==0 then return high,low end
+	local ah,al=shiftLeft(high,low,amount);local bh,bl=shiftRight(high,low,64-amount)
+	return bor(ah,bh),bor(al,bl)
+end
+-- PowerPC numbers mask bits from the most significant end of the operand.
+local function wordMask(first,last)
+	if first<=last then return band(rshift(0xFFFFFFFF,first),lshift(0xFFFFFFFF,31-last)) end
+	return bor(rshift(0xFFFFFFFF,first),lshift(0xFFFFFFFF,31-last))
+end
+local function wideMask(first,last)
+	if first==last+1 then return 0xFFFFFFFF,0xFFFFFFFF end
+	if first>last then
+		local high,low=wideMask(last+1,first-1);return bnot(high),bnot(low)
+	end
+	local high,low=0,0
+	if first<32 then high=wordMask(first,math.min(last,31)) end
+	if last>=32 then low=wordMask(math.max(first,32)-32,last-32) end
+	return high,low
+end
 local function readBE(data,address,bytes)
 	local value=0
 	for i=0,bytes-1 do value=value*256+buffer.readu8(data,address+i) end
@@ -84,6 +114,36 @@ function CPU:step()
 		if op<=25 then low=bor(low,mask) elseif op<=27 then low=bxor(low,mask) else high,low=0,band(low,mask) end
 		self:setRegister(ra,high,low)
 		if op>=28 then self:record(high,low) end
+	elseif op==20 or op==21 or op==23 then
+		local _,source=self:getRegister(rt)
+		local amount=rb
+		if op==23 then local _,value=self:getRegister(rb);amount=band(value,31) end
+		local mh,ml=wideMask(32+band(rshift(word,6),31),32+band(rshift(word,1),31))
+		local rotated=bit32.lrotate(source,amount)
+		local high,low=band(rotated,mh),band(rotated,ml)
+		if op==20 then local ah,al=self:getRegister(ra);high,low=bor(band(ah,bnot(mh)),high),bor(band(al,bnot(ml)),low) end
+		self:setRegister(ra,high,low)
+		if band(word,1)~=0 then self:record(high,low) end
+	elseif op==30 then
+		local high,low=self:getRegister(rt)
+		local selector=band(rshift(word,2),7)
+		local boundary=band(rshift(word,6),31)+band(word,32)
+		local amount=rb+band(word,2)*16
+		local mh,ml
+		if selector<=3 then
+			if selector==0 then mh,ml=wideMask(boundary,63)
+			elseif selector==1 then mh,ml=wideMask(0,boundary)
+			else mh,ml=wideMask(boundary,63-amount) end
+		else
+			local xo=band(rshift(word,1),15)
+			if xo~=8 and xo~=9 then return unsupported() end
+			local _,value=self:getRegister(rb);amount=band(value,63)
+			if xo==8 then mh,ml=wideMask(boundary,63) else mh,ml=wideMask(0,boundary) end
+		end
+		high,low=rotate(high,low,amount);high,low=band(high,mh),band(low,ml)
+		if selector==3 then local ah,al=self:getRegister(ra);high,low=bor(band(ah,bnot(mh)),high),bor(band(al,bnot(ml)),low) end
+		self:setRegister(ra,high,low)
+		if band(word,1)~=0 then self:record(high,low) end
 	elseif op==10 or op==11 then
 		local ah,al=self:getRegister(ra)
 		local bh,bl=0,immediate
@@ -156,6 +216,38 @@ function CPU:step()
 			elseif xo==316 then high,low=bxor(ah,bh),bxor(al,bl)
 			else high,low=bnot(bor(ah,bh)),bnot(bor(al,bl)) end
 			self:setRegister(ra,high,low)
+		elseif xo==24 or xo==536 or xo==792 or xo==824 or xo==27 or xo==539 or xo==794 or band(xo,0x3FE)==826 then
+			local ah,al=self:getRegister(rt)
+			local wide=xo==27 or xo==539 or xo==794 or band(xo,0x3FE)==826
+			local amount
+			if xo==824 then amount=rb
+			elseif band(xo,0x3FE)==826 then amount=rb+band(word,2)*16
+			else local _,value=self:getRegister(rb);amount=band(value,wide and 127 or 63) end
+			local arithmetic=xo==792 or xo==824 or xo==794 or band(xo,0x3FE)==826
+			if not wide then ah=0;al=band(al,0xFFFFFFFF) end
+			if xo==24 or xo==27 then high,low=shiftLeft(ah,al,amount)
+			else high,low=shiftRight(ah,al,amount) end
+			if not wide then high=0;if amount>=32 then low=0 end end
+			if arithmetic then
+				local negative=(wide and ah or al)>=0x80000000
+				local lost
+				if wide then
+					local rh,rl=shiftLeft(high,low,amount);lost=rh~=ah or rl~=al
+					if negative then
+						if amount>=64 then high,low=0xFFFFFFFF,0xFFFFFFFF
+						elseif amount>0 then local mh,ml=wideMask(0,amount-1);high,low=bor(high,mh),bor(low,ml) end
+					end
+				else
+					lost=(amount>=32 and al~=0) or (amount<32 and lshift(low,amount)~=al)
+					if negative then
+						high=0xFFFFFFFF
+						if amount>=32 then low=0xFFFFFFFF elseif amount>0 then low=bor(low,lshift(0xFFFFFFFF,32-amount)) end
+					end
+				end
+				self.xer=bor(band(self.xer,0xDFFFFFFF),(negative and lost) and 0x20000000 or 0)
+			end
+			self:setRegister(ra,high,low)
+			if band(word,1)~=0 then self:record(high,low) end
 		elseif xo==0 or xo==32 then
 			local ah,al=self:getRegister(ra);local bh,bl=self:getRegister(rb)
 			self:compare(band(rshift(word,23),7),ah,al,bh,bl,xo==0,band(word,0x200000)~=0)

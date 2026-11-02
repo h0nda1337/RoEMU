@@ -1,0 +1,5 @@
+local Platform=require("../src/ServerStorage/RoEmu_PowerPC_Platform")
+local cases=require("./powerpc_elf_cases")
+local probe=require("./powerpc_owned_probe")
+local report=cases(Platform,probe)
+print("POWERPC_ELF",report.checks,report.rejected,report.compiledC)

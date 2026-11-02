@@ -12678,5 +12678,9 @@
   {
     "path": "ServerStorage/RoEmu_PowerPC_Platform",
     "class": "ModuleScript"
+  },
+  {
+    "path": "ServerStorage/RoEmu_PowerPC_ELF64",
+    "class": "ModuleScript"
   }
 ]

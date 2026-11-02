@@ -28,8 +28,9 @@ de instrucciones se renuevan por instrucción para respetar código modificado.
 
 ## PowerPC64 / PS3
 
-`RoEmu_PowerPC_CPU` y `RoEmu_PowerPC_Platform` exponen una base entera PowerPC64
-con RAM plana y una prueba de instrucciones. El perfil PS3 no es arrancable y
+`RoEmu_PowerPC_CPU`, `RoEmu_PowerPC_ELF64` y `RoEmu_PowerPC_Platform` exponen una
+base entera PowerPC64 con RAM plana y carga de ejecutables ELF64 estáticos.
+El perfil PS3 no es arrancable y
 declara por separado las capacidades que faltan. Consulta
 [PowerPC64 y perfil PS3](powerpc-ps3.md).
 

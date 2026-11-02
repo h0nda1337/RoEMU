@@ -16,6 +16,10 @@ __pycache__/
 *.qcow2
 *.cbsp
 *.rom
+*.pup
+*.self
+*.sprx
+*.prx
 *.elf
 *.bin
 *.rbxl
