@@ -34,7 +34,7 @@ return function(Platform,vectors,threads)
 		local before=buffer.readstring(c.ram,0x4100,8)
 		check(step(word).kind=="memory_fault" and c.instructions==count and c.cr==cr and c.fpscr==fpscr and c.reservation==token and buffer.readstring(c.ram,0x4100,8)==before,"FPR access fault has no architectural mutation")
 	end
-	for _,word in ipairs({x(278,0,0,6,1),x(599,5,0,6,1),51*67108864+5*2097152+0x4100,63*67108864+5*2097152+65536+72*2,0xFC00069C}) do
+	for _,word in ipairs({x(278,0,0,6,1),x(599,5,0,6,1),51*67108864+5*2097152+0x4100,63*67108864+5*2097152+65536+72*2,0xFC00002A}) do
 		local count=c.instructions;check(step(word).kind=="unsupported_instruction" and c.instructions==count and c.pcLo==0x1000,"reserved forms/arithmetic remain explicit stops")
 	end
 	-- The real compiled multi-thread fixture never uses FPRs. Inject different
@@ -69,5 +69,5 @@ return function(Platform,vectors,threads)
 	check(result.kind=="process-exited" and result.exitStatus==42,"compiled thread program completes with isolated FPR state")
 	local count=0;for _ in pairs(seen) do count+=1 end
 	check(count==4 and switches>8,"four contexts actually observed")
-	return {checks=checks,rawBitVectors=#vectors,threadSwitches=switches,threadContexts=count,floatingArithmetic=false}
+	return {checks=checks,rawBitVectors=#vectors,threadSwitches=switches,threadContexts=count,completeFloatingPoint=false}
 end

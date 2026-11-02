@@ -24,14 +24,17 @@ consume la selección de arquitectura: después se puede elegir RV32 o i386.
   simples y dobles, indexados y con actualización; `fmr`, `fneg`, `fabs`,
   `fnabs` y sus formas con CR1. Los movimientos dobles conservan los bits de NaN.
 - Precargas `dcbt`/`dcbtst` sin acceso arquitectónico a la dirección sugerida.
+- Subconjunto FPU con conversión entera `fcfid`, redondeo `frsp` y división
+  `fdiv`/`fdivs`, cuatro modos de redondeo y estado FPSCR.
 - Presupuestos de ejecución y resultados explícitos para instrucciones o
   direcciones que todavía no soporta.
 
 La memoria es una ventana de RAM plana, no un espacio virtual completo de
 64 bits. Los accesos exigen alineación natural. Los fallos se devuelven al
 anfitrión; todavía no se entregan como excepciones arquitectónicas al invitado.
-No se implementan privilegios, MMU, aritmética FPU, AltiVec ni el juego completo
-de instrucciones. Los movimientos FPR no implican soporte de operaciones numéricas.
+No se implementan privilegios, MMU, AltiVec ni el juego completo de instrucciones.
+La FPU todavía carece de suma, multiplicación, operaciones fusionadas y otras
+instrucciones; su soporte es parcial.
 La actualización de CR1 en `fmr.` sigue los bits de estado documentados por
 [IBM](https://www.ibm.com/docs/en/aix/7.2.0?topic=set-fmr-floating-move-register-instruction).
 
@@ -149,7 +152,35 @@ búfer, con metadatos presentes y ausentes, tanto en RoEMU como en RPCS3. Las
 pruebas incluyen archivos truncados, punteros inválidos y rechazo de una carga
 sin alterar un proceso existente. El planificador guarda los 32 FPR y FPSCR
 por hilo; otro ensayo verifica su aislamiento durante 311 cambios de contexto
-en un programa compilado de cuatro hilos. `floatingArithmetic` sigue en `false`.
+en un programa compilado de cuatro hilos. `completeFloatingPoint` sigue en `false`.
+
+## Cálculo de coma flotante
+
+`RoEmu_PowerPC_FPU` implementa `fcfid`, `frsp`, `fdiv` y `fdivs` sobre
+significandos exactos y pares de palabras. Un entero de 64 bits no se convierte
+primero a un número del host: así se evita perder bits antes del redondeo.
+La división obtiene los bits del cociente y el resto, y redondea una sola vez.
+
+Se admiten los cuatro modos de FPSCR, ceros con signo, infinitos, NaN,
+subnormales y excepciones con indicadores persistentes. Se comprueban la
+supresión del resultado con invalidación/división por cero habilitadas y los
+exponentes ajustados al habilitar desbordamiento o subdesbordamiento. El modo
+no IEEE se detiene explícitamente. Todavía no se entregan excepciones a un
+supervisor mediante MSR FE0/FE1; la ejecución usa el modelo de excepción
+ignorada para la entrega, conservando los efectos FPSCR/resultados definidos.
+
+La referencia normativa es el libro I de
+[Power ISA 2.07](https://fileadmin.cs.lth.se/cs/education/EDAN25/PowerISA_V2.07_PUBLIC.pdf),
+secciones 4.2.2, 4.4 y 4.6.7. Las pruebas numéricas contrastan 9 256 conversiones,
+4 856 redondeos y 6 724 divisiones con QEMU 970 y una referencia racional propia.
+Los resultados numéricos coinciden. En estos casos QEMU conserva FR, vuelve a
+activar FX aunque el indicador correspondiente ya estaba activo y clasifica
+algunos subnormales simples según su formato doble. Esas diferencias de estado
+se registran y se comprueban contra la ISA, separadas del contraste numérico.
+
+Las pruebas de Studio incluyen 243 vectores de cálculo, 528 de excepciones
+habilitadas y un programa C propio que ejecuta las instrucciones y termina con
+estado 42, también en RPCS3. Esto sigue sin validar toda la FPU del PPE.
 
 La prueba C de proceso imprime `ROEMU_PPU_TLS_ARGS_OK` y termina con estado 42
 tanto en RoEMU como en la entrada directa HLE de RPCS3. Hay 104 comprobaciones
@@ -218,10 +249,10 @@ implementa automáticamente el arranque de firmware, LV1/LV2 o GameOS en Luau.
 
 La inspección local de `vsh.self` 4.93 mediante RPCS3 permitió obtener su ELF
 y probarlo contra el motor real de RoEMU. Con inicialización TLS a cargo del
-invitado y sin inventar metadatos de título, VSH ejecuta 34 336 instrucciones,
+invitado y sin inventar metadatos de título, VSH ejecuta 35 212 instrucciones,
 crea mutex y condiciones, usa operaciones atómicas, reservas de memoria y
-transferencias FPR. Se detiene en `fcfid`, conversión numérica aún pendiente,
-en PC `0x0034DE0C`. No llega a la
+transferencias y cálculo FPR. Se detiene en la llamada 120, `sys_rwlock_create`,
+en PC `0x001B29E0`, aún pendiente. No llega a la
 interfaz ni al arranque completo de GameOS. El
 firmware no se incluye en los ejemplos, la plantilla ni el lugar distribuible.
 

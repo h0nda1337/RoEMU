@@ -720,6 +720,12 @@
     "external_payload": false
   },
   {
+    "path": "ServerStorage/RoEmu_PowerPC_FPU",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_PowerPC_FPU.luau",
+    "external_payload": false
+  },
+  {
     "path": "ServerScriptService/RunSModeDemo",
     "class": "Script",
     "file": "src/ServerScriptService/RunSModeDemo.luau",

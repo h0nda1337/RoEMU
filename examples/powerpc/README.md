@@ -126,4 +126,15 @@ luau --codegen -O2 tests/powerpc_fpr.luau
 Los vectores FPR son operandos sintéticos contrastados con QEMU 970. Comprueban
 transferencias de bits y cambios de signo, incluidos NaN y subnormales. El
 programa compilado de hilos también verifica el aislamiento de los 32 FPR y
-FPSCR durante cambios reales de contexto. No se implementa aritmética FPU.
+FPSCR durante cambios reales de contexto.
+
+`floating.c` ejecuta directamente `fcfid`, `frsp`, `fdiv` y `fdivs`, verifica
+sus resultados como bits exactos y escribe `ROEMU_PPU_FLOATING_OK` antes de
+salir con estado 42. Incluye el entero 2⁵³+1, el mínimo entero con signo de
+64 bits, 1/3 en ambas precisiones y cero negativo. Se compila y enlaza como
+`metadata.c`; su ELF compacto propio tiene 632 bytes. El mismo programa pasó
+en RoEMU y en RPCS3. No comprueba toda la FPU ni entrega de excepciones MSR.
+
+```sh
+luau --codegen -O2 tests/powerpc_fp_compute.luau
+```

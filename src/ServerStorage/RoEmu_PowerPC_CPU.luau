@@ -5,6 +5,7 @@
 local band,bor,bxor,bnot,lshift,rshift=bit32.band,bit32.bor,bit32.bxor,bit32.bnot,bit32.lshift,bit32.rshift
 local CPU={}
 CPU.__index=CPU
+local FPU=script and require(script.Parent.RoEmu_PowerPC_FPU) or require("./RoEmu_PowerPC_FPU")
 local U32=4294967296
 local function add(ah,al,bh,bl)
 	local low=al+bl
@@ -551,14 +552,23 @@ function CPU:step()
 			end
 		else return unsupported() end
 		if (xo==28 or xo==444 or xo==316 or xo==124) and band(word,1)~=0 then self:record(high,low) end
-	elseif op==63 then
+	elseif op==59 or op==63 then
 		local xo=band(rshift(word,1),1023)
-		if ra~=0 or (xo~=40 and xo~=72 and xo~=136 and xo~=264) then return unsupported() end
+		local divide=xo==18
+		if not divide and (op~=63 or ra~=0 or (xo~=12 and xo~=40 and xo~=72 and xo~=136 and xo~=264 and xo~=846)) then return unsupported() end
 		local high,low=self:getFloatingRegister(rb)
-		if xo==40 then high=bxor(high,0x80000000)
+		local write=true
+		if divide or xo==12 or xo==846 then
+			if band(self.fpscr,4)~=0 then return fault("unsupported_fp_mode","non-IEEE FP mode is not implemented",word) end
+			if divide then
+				local ah,al=self:getFloatingRegister(ra)
+				high,low,self.fpscr,write=FPU.Divide(ah,al,high,low,self.fpscr,op==59)
+			elseif xo==846 then high,low,self.fpscr=FPU.FromSigned(high,low,self.fpscr)
+			else high,low,self.fpscr,write=FPU.RoundSingle(high,low,self.fpscr) end
+		elseif xo==40 then high=bxor(high,0x80000000)
 		elseif xo==136 then high=bor(high,0x80000000)
 		elseif xo==264 then high=band(high,0x7FFFFFFF) end
-		self:setFloatingRegister(rt,high,low)
+		if write then self:setFloatingRegister(rt,high,low) end
 		if band(word,1)~=0 then self.cr=bor(band(self.cr,0xF0FFFFFF),lshift(rshift(self.fpscr,28),24)) end
 	else return unsupported() end
 	self.pcHi,self.pcLo=nextHi,nextLo

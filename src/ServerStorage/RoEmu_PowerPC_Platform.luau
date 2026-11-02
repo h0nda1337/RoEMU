@@ -3,15 +3,16 @@
 local CPU=script and require(script.Parent.RoEmu_PowerPC_CPU) or require("./RoEmu_PowerPC_CPU")
 local ELF=script and require(script.Parent.RoEmu_PowerPC_ELF64) or require("./RoEmu_PowerPC_ELF64")
 local Process=script and require(script.Parent.RoEmu_PS3_Process) or require("./RoEmu_PS3_Process")
-local Platform={VERSION="0.5.0",ARCH="powerpc64"}
+local Platform={VERSION="0.6.0",ARCH="powerpc64"}
 Platform.CAPABILITIES={
 	schema=1,architecture="powerpc64",profile="ps3-cell",endianness="big",
 	maturity="integer-subset",headless=true,flatBinary=true,
 	memory={model="flat-ram-window",translated=false,full64BitAddressSpace=false},
 	cpu={registerBits=64,exactIntegerPairs=true,integerSubset=true,completeISA=false,
-		mmu=false,privilegedMode=false,floatingPoint=false,altivec=false,smt=false,spu=false,
+		mmu=false,privilegedMode=false,floatingPoint=true,completeFloatingPoint=false,altivec=false,smt=false,spu=false,
 		loadReserve=true,storeConditional=true,reservationGranule=128,timebase=true,
-		floatingRegisterTransfers=true,floatingArithmetic=false,prefetchHints=true},
+		floatingRegisterTransfers=true,floatingArithmetic=true,floatingDivide=true,floatingConversions=true,
+		floatingNonIEEE=false,fpExceptionDelivery=false,prefetchHints=true},
 	devices={flatRAM=true,rsx=false,ps3Storage=false,interruptController=false,usb=false,audio=false},
 	loaders={elf64=true,staticExecOnly=true,elfv1Descriptor=true,ps3PPUDescriptor=true,tlsMetadata=true,self=false,pup=false},
 	process={singlePPU=true,staticTLS=true,guestTLS=true,arguments=true,imports=false,scheduler="cooperative-priority",

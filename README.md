@@ -12,7 +12,8 @@ y la distribución de la interfaz original.
 - Base PowerPC64 con registros exactos, rotaciones/desplazamientos y carga ELF64
   estática comprobada con un programa C propio.
   Incluye TLS, consola, hilos PPU, condiciones, metadatos SFO y transferencias
-  exactas de registros de coma flotante, además de memoria/mutex básicos.
+  exactas de registros de coma flotante, conversiones y división IEEE,
+  además de memoria/mutex básicos.
   El selector ofrece el perfil PS3 en desarrollo; **CellOS/GameOS aún no arranca**.
 - VGA por planos y framebuffer VBE, hasta 1024 × 768, paleta del invitado,
   actualizaciones parciales de vídeo y ratón absoluto compatible con VMware.
