@@ -708,6 +708,12 @@
     "external_payload": false
   },
   {
+    "path": "ServerStorage/RoEmu_PS3_Scheduler",
+    "class": "ModuleScript",
+    "file": "src/ServerStorage/RoEmu_PS3_Scheduler.luau",
+    "external_payload": false
+  },
+  {
     "path": "ServerScriptService/RunSModeDemo",
     "class": "Script",
     "file": "src/ServerScriptService/RunSModeDemo.luau",

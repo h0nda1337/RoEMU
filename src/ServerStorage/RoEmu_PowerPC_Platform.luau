@@ -3,17 +3,20 @@
 local CPU=script and require(script.Parent.RoEmu_PowerPC_CPU) or require("./RoEmu_PowerPC_CPU")
 local ELF=script and require(script.Parent.RoEmu_PowerPC_ELF64) or require("./RoEmu_PowerPC_ELF64")
 local Process=script and require(script.Parent.RoEmu_PS3_Process) or require("./RoEmu_PS3_Process")
-local Platform={VERSION="0.3.0",ARCH="powerpc64"}
+local Platform={VERSION="0.4.0",ARCH="powerpc64"}
 Platform.CAPABILITIES={
 	schema=1,architecture="powerpc64",profile="ps3-cell",endianness="big",
 	maturity="integer-subset",headless=true,flatBinary=true,
 	memory={model="flat-ram-window",translated=false,full64BitAddressSpace=false},
 	cpu={registerBits=64,exactIntegerPairs=true,integerSubset=true,completeISA=false,
-		mmu=false,privilegedMode=false,floatingPoint=false,altivec=false,smt=false,spu=false},
+		mmu=false,privilegedMode=false,floatingPoint=false,altivec=false,smt=false,spu=false,
+		loadReserve=true,storeConditional=true,reservationGranule=128,timebase=true},
 	devices={flatRAM=true,rsx=false,ps3Storage=false,interruptController=false,usb=false,audio=false},
 	loaders={elf64=true,staticExecOnly=true,elfv1Descriptor=true,ps3PPUDescriptor=true,tlsMetadata=true,self=false,pup=false},
-	process={singlePPU=true,staticTLS=true,guestTLS=true,arguments=true,imports=false,scheduler=false,
-		syscalls={1,22,100,101,102,103,104,348,349,403},mutexWaiting=false},
+	process={singlePPU=true,staticTLS=true,guestTLS=true,arguments=true,imports=false,scheduler="cooperative-priority",
+		maxThreads=256,integerContexts=true,virtualTime=true,timebaseHz=80000000,
+		syscalls={1,22,41,43,44,45,47,48,49,52,53,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,117,141,142,147,348,349,403},
+		mutexWaiting=true,conditionVariables=true,lightMutexes=true},
 	ps3={lv1=false,lv2=false,secureBoot=false,cellOS=false,gameOS=false,bootSupported=false},
 }
 function Platform.new(options) return CPU.new(options) end

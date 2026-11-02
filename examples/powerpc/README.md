@@ -65,3 +65,39 @@ RPCS3 utiliza PPU Interpreter (static), vídeo/audio Null y las bibliotecas
 comparar la inicialización HLE. Eso no prueba el arranque mediante bibliotecas
 LLE ni GameOS. El ELF con la disposición original y el compacto conservan las
 mismas instrucciones y el segmento TLS; solo cambia el empaquetado de archivo.
+
+## Varios hilos y sincronización
+
+`threads.c` crea tres hijos, señala una condición, despierta dos esperadores
+mediante difusión, recupera mutex recursivos después de una señal y un
+vencimiento, y une los hilos con resultados de 64 bits. También verifica mutex
+ligeros, CAS de 64 bits y el contador de tiempo. La entrada adicional `I`
+selecciona el protocolo de herencia de prioridad y un hijo de prioridad superior.
+Ambas variantes imprimen `ROEMU_PPU_THREADS_COND_OK` y salen con estado 42 en
+RoEMU y en la referencia HLE de RPCS3.
+
+Para esta muestra con llamadas entre funciones se necesita un enlazador que
+soporte ELFv1, como GNU Binutils para PowerPC64. LLD retiró ese soporte;
+[la revisión de LLVM](https://reviews.llvm.org/D46316) documenta la diferencia.
+Las dos muestras iniciales verificadas con LLD son funciones autónomas, y no
+prueban llamadas ELFv1 generales.
+
+```sh
+clang --target=powerpc64-unknown-linux-gnu -mcpu=970 -mabi=elfv1 -O1 \
+  -ffreestanding -fno-builtin -fno-stack-protector -fno-pic \
+  -mno-altivec -mno-vsx -msoft-float -ftls-model=local-exec \
+  -c examples/powerpc/threads.c -o build/powerpc/threads.o
+powerpc64-linux-gnu-ld -m elf64ppc -T examples/powerpc/process.ld \
+  build/powerpc/threads.o -o build/powerpc/threads-linked.elf
+python examples/powerpc/pack_process.py build/powerpc/threads-linked.elf build/powerpc
+luau --codegen -O2 tests/powerpc_threads.luau
+luau --codegen -O2 tests/powerpc_wait.luau
+luau --codegen -O2 tests/powerpc_atomic.luau
+```
+
+Referencia de construcción: Clang 19.1.7 y GNU ld 2.44. La muestra compacta
+tiene 4 808 bytes. `pack_process.py` adapta los descriptores `.opd` usados por
+estas muestras para entregarlos a LV2. Es una adaptación de programas propios
+sin SDK ni libc; no convierte de forma general llamadas indirectas ELFv1 en
+llamadas indirectas con ABI PS3. El archivo compilado y los fixtures proceden
+exclusivamente de este código propio.

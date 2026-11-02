@@ -13,6 +13,14 @@
     "processExitStatus": 42,
     "referenceHostProcessExitCode": 0,
     "gameOSBootVerified": false,
+    "threads": {
+      "source": "examples/powerpc/threads.c",
+      "toolchain": "Clang 19.1.7 and GNU ld 2.44, ELFv1 adapted for the owned PPU probes",
+      "profiles": ["FIFO/equal priority", "priority inheritance/higher-priority child"],
+      "tty": "ROEMU_PPU_THREADS_COND_OK",
+      "processExitStatus": 42,
+      "referenceHostProcessExitCode": 0
+    },
     "tlsProcess": {
       "source": "examples/powerpc/process.c",
       "profile": "Direct PPU entry, static interpreters, liblv2.sprx:hle and libsysmodule.sprx:hle",

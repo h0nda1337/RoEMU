@@ -17,6 +17,23 @@ at=descriptor[2]+entry-descriptor[3]
 code,toc,environment=struct.unpack_from('>QQQ',raw,at)
 assert code<2**32 and toc<2**32 and environment==0
 struct.pack_into('>II',raw,at,code,toc)
+# All function pointers handed to LV2 need PPU descriptors, not only e_entry.
+# This adaptation is for these freestanding probes, which do not perform C
+# indirect function calls using the generic ELFv1 calling convention.
+shoff=struct.unpack_from('>Q',raw,40)[0]
+shnum=struct.unpack_from('>H',raw,60)[0];shstr=struct.unpack_from('>H',raw,62)[0]
+if shoff and shnum:
+    sections=[struct.unpack_from('>IIQQQQIIQQ',raw,shoff+i*64) for i in range(shnum)]
+    names=raw[sections[shstr][4]:sections[shstr][4]+sections[shstr][5]]
+    for section in sections:
+        name=bytes(names[section[0]:]).split(b'\0')[0]
+        if name==b'.opd':
+            assert section[5]%24==0
+            for pos in range(section[4],section[4]+section[5],24):
+                if pos==at:continue
+                address,rtoc,environment=struct.unpack_from('>QQQ',raw,pos)
+                assert address<2**32 and rtoc<2**32 and environment==0
+                struct.pack_into('>II',raw,pos,address,rtoc)
 args.output_directory.mkdir(parents=True,exist_ok=True)
 (args.output_directory/'process-rpcs3.elf').write_bytes(raw)
 out=bytearray(64+len(phs)*56);out[:64]=raw[:64]

@@ -151,6 +151,8 @@ function ELF.Load(cpu,data,options)
 		returnAddress=returnAddress,tls=tls,stackReservedBytes=stackReserved,standaloneOnly=true,ps3BootSupported=false}
 	cpu.loadedImage=report
 	cpu.process=nil
+	cpu.readTimeBase=nil;cpu.timeBaseHi,cpu.timeBaseLo=0,0
+	cpu.reservation=nil
 	return true,report
 end
 return ELF

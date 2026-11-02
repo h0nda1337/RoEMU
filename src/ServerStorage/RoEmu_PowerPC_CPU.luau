@@ -108,6 +108,11 @@ function CPU:load(data,address)
 	assert(typeof(data)=="buffer","flat PowerPC image must be a buffer")
 	assert(address>=0 and address%4==0 and address+buffer.len(data)<=buffer.len(self.ram),"flat PowerPC image bounds/alignment")
 	buffer.copy(self.ram,address,data)
+	self.reservation=nil
+end
+function CPU:invalidateReservation(address,bytes)
+	local reservation=self.reservation
+	if reservation and address<reservation.granule+128 and reservation.granule<address+bytes then self.reservation=nil end
 end
 function CPU:setCR(field,less,greater,equal)
 	local shift=28-field*4
@@ -221,7 +226,10 @@ function CPU:step()
 		local targetHi,targetLo
 		local bo,bi=rt,ra
 		local control=op==19 and band(rshift(word,1),1023) or -1
-		if control==0 then
+		if control==150 then
+			if word~=0x4C00012C then return unsupported() end
+			-- Instruction fetch and stores are already serialized in this core.
+		elseif control==0 then
 			local to,from=band(rshift(word,23),7),band(rshift(word,18),7)
 			local shift=28-to*4
 			self.cr=bor(band(self.cr,bnot(lshift(15,shift))),lshift(band(rshift(self.cr,28-from*4),15),shift))
@@ -265,6 +273,7 @@ function CPU:step()
 		if high~=0 or address%bytes~=0 or address+bytes>buffer.len(self.ram) then return fault("memory_fault","data address outside aligned flat RAM",word) end
 		if storing then
 			local vh,vl=self:getRegister(rt)
+			self:invalidateReservation(address,bytes)
 			if bytes==8 then writeBE(self.ram,address,4,vh);writeBE(self.ram,address+4,4,vl)
 			else writeBE(self.ram,address,bytes,vl) end
 		else
@@ -282,7 +291,31 @@ function CPU:step()
 		local xo=band(rshift(word,1),1023)
 		local high,low
 		local memory=indexedMemory[xo]
-		if memory then
+		if word==0x7C0004AC or word==0x7C2004AC or word==0x7C0006AC then
+			-- sync/lwsync/eieio: all implemented memory/device effects are ordered.
+		elseif xo==20 or xo==84 or xo==150 or xo==214 then
+			local storing=xo==150 or xo==214
+			local bytes=(xo==84 or xo==214) and 8 or 4
+			if band(word,1)~=(storing and 1 or 0) then return unsupported() end
+			local ah,al=0,0;if ra~=0 then ah,al=self:getRegister(ra) end
+			local bh,bl=self:getRegister(rb);local addressHi,address=add(ah,al,bh,bl)
+			if addressHi~=0 or address%bytes~=0 or address+bytes>buffer.len(self.ram) then return fault("memory_fault","reservation address outside aligned flat RAM",word) end
+			local vh,vl=0,readBE(self.ram,address,4)
+			if bytes==8 then vh,vl=vl,readBE(self.ram,address+4,4) end
+			if storing then
+				local reservation=self.reservation
+				local success=reservation~=nil and reservation.address==address and reservation.bytes==bytes and reservation.high==vh and reservation.low==vl
+				self.reservation=nil
+				if success then
+					local sh,sl=self:getRegister(rt)
+					if bytes==8 then writeBE(self.ram,address,4,sh);writeBE(self.ram,address+4,4,sl) else writeBE(self.ram,address,4,sl) end
+				end
+				self:setCR(0,false,false,success)
+			else
+				self:setRegister(rt,vh,vl)
+				self.reservation={address=address,bytes=bytes,granule=math.floor(address/128)*128,high=vh,low=vl}
+			end
+		elseif memory then
 			local bytes,storing,updating,signed=memory[1],memory[2],memory[3],memory[4]
 			if band(word,1)~=0 or (updating and (ra==0 or (not storing and ra==rt))) then return unsupported() end
 			local ah,al=0,0;if ra~=0 then ah,al=self:getRegister(ra) end
@@ -291,6 +324,7 @@ function CPU:step()
 			if addressHi~=0 or address%bytes~=0 or address+bytes>buffer.len(self.ram) then return fault("memory_fault","indexed address outside aligned flat RAM",word) end
 			if storing then
 				local vh,vl=self:getRegister(rt)
+				self:invalidateReservation(address,bytes)
 				if bytes==8 then writeBE(self.ram,address,4,vh);writeBE(self.ram,address+4,4,vl)
 				else writeBE(self.ram,address,bytes,vl) end
 			else
@@ -395,6 +429,11 @@ function CPU:step()
 			if xo>=512 then self.xer=bor(band(self.xer,0xBFFFFFFF),overflow and 0xC0000000 or 0) end
 			self:setRegister(rt,high,low)
 			if band(word,1)~=0 then self:record(high,low) end
+		elseif xo==26 or xo==58 then
+			local sh,sl=self:getRegister(rt)
+			low=xo==26 and bit32.countlz(sl) or (sh==0 and 32+bit32.countlz(sl) or bit32.countlz(sh))
+			self:setRegister(ra,0,low)
+			if band(word,1)~=0 then self:record(0,low) end
 		elseif xo==954 or xo==922 or xo==986 then
 			local _,value=self:getRegister(rt)
 			if xo==954 then value=band(value,255);if value>=128 then value-=256 end
@@ -444,6 +483,13 @@ function CPU:step()
 		elseif xo==0 or xo==32 then
 			local ah,al=self:getRegister(ra);local bh,bl=self:getRegister(rb)
 			self:compare(band(rshift(word,23),7),ah,al,bh,bl,xo==0,band(word,0x200000)~=0)
+		elseif xo==371 or (xo==339 and (ra+rb*32==268 or ra+rb*32==269)) then
+			if band(word,1)~=0 then return unsupported() end
+			local tbr=ra+rb*32
+			if tbr~=268 and tbr~=269 then return unsupported() end
+			local high,low=self.timeBaseHi or 0,self.timeBaseLo or 0
+			if self.readTimeBase then high,low=self.readTimeBase() end
+			if tbr==268 then self:setRegister(rt,high,low) else self:setRegister(rt,0,high) end
 		elseif xo==339 or xo==467 then
 			if band(word,1)~=0 then return unsupported() end
 			local spr=ra+rb*32

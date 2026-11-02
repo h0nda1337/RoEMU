@@ -18,6 +18,8 @@ consume la selección de arquitectura: después se puede elegir RV32 o i386.
   aritméticos, y actualización del acarreo de XER para estos últimos.
 - Cargas/almacenamientos indexados, aritmética con acarreo y desbordamiento,
   multiplicación/división enteras exactas, extensión de signo y manipulación CR.
+- Reservas `lwarx`/`ldarx`, escrituras condicionales y barreras en el modelo de
+  memoria ordenada, además de lectura exacta del contador de tiempo.
 - Presupuestos de ejecución y resultados explícitos para instrucciones o
   direcciones que todavía no soporta.
 
@@ -28,7 +30,8 @@ No se implementan privilegios, MMU, FPU, AltiVec ni el juego completo de instruc
 
 `RoEmu_PowerPC_Platform.SelfTest()` ejecuta instrucciones reales de prueba y
 comprueba suma, memoria, bucle y precisión de 64 bits. En la validación local,
-5 795 casos del subconjunto se contrastaron con un procesador 970 de QEMU.
+5 875 casos del subconjunto se contrastaron con un procesador 970 de QEMU,
+además de 120 secuencias de reserva/escritura condicional y barreras.
 Ese contraste no certifica una implementación de Cell ni de toda PowerPC.
 
 `RoEmu_PowerPC_ELF64` carga ELF64 big endian estáticos (`ET_EXEC`, `EM_PPC64`)
@@ -102,8 +105,16 @@ llamada implementada y avanza PC/contador. Una llamada desconocida devuelve
 
 - Identificador de proceso (1), salida (22) y escritura TTY (403).
 - Mutex privados: crear/destruir/bloquear/intentar/desbloquear (100–104),
-  propietario, recursión y errores. IPC y espera con otros hilos se detienen
-  expresamente; todavía no existe un planificador multihilo.
+  propietario, recursión, colas FIFO/prioridad, herencia de prioridad y errores.
+- Condiciones privadas (105–110): asociación al mutex, espera con liberación
+  atómica, señal individual/dirigida, difusión y recuperación del mutex antes
+  de devolver el control. La espera conserva la profundidad recursiva.
+- Hilos PPU (41, 43–45, 47–49, 52/53): creación detenida, inicio, cesión,
+  salida, unión y separación, prioridad y consulta de pila.
+- Mutex ligeros del núcleo (95–99/117): objetos y señales, colas de espera,
+  intento sin bloqueo, tiempos límite y señal de reintento. El protocolo
+  `SYS_SYNC_RETRY` y las condiciones ligeras todavía se detienen explícitamente.
+- Esperas de temporizador (141/142) y frecuencia del contador (147).
 - Memoria (348/349): reservas reales de 64 KiB/1 MiB dentro de la RAM disponible,
   sin superponer imágenes/pila/TLS, inicialización a cero y liberación.
 
@@ -116,8 +127,42 @@ La prueba C de proceso imprime `ROEMU_PPU_TLS_ARGS_OK` y termina con estado 42
 tanto en RoEMU como en la entrada directa HLE de RPCS3. Hay 104 comprobaciones
 de proceso adicionales, incluidas fallos atómicos de TLS/argumentos, punteros
 interiores de reservas, liberación/reutilización, mutex y llamadas pendientes.
-No se implementan aún carga PRX/importaciones, condiciones, otros hilos ni el
-entorno completo de LV2. El selector sigue indicando que PS3 no arranca.
+No se implementan aún carga PRX/importaciones, IPC ni el entorno completo de
+LV2. El selector sigue indicando que PS3 no arranca.
+
+## Planificador y operaciones atómicas
+
+`RoEmu_PS3_Scheduler` ejecuta contextos enteros de hasta 256 hilos sobre una
+única CPU virtual. Conserva GPR, PC, LR, CTR, CR y XER; cada hijo recibe una
+pila separada y el TLS indicado por el llamador. Al salir libera su pila;
+`join` conserva el resultado exacto de 64 bits y consume el recurso del hilo.
+La opción `quantum` de `LoadProcess` fija el presupuesto entre intercalaciones
+(256 instrucciones por defecto). Se prioriza el número menor y se rota entre
+iguales; los mutex de protocolo 3 propagan prioridad a través de sus esperadores.
+Este modelo no implementa SMT, ejecución simultánea de PPEs ni ciclos Cell.
+
+Una espera aceptada avanza una vez y aparca el contexto. Si nadie puede
+ejecutarse y no hay un tiempo límite, `RunProcess` devuelve `process-waiting`
+sin seguir ejecutando instrucciones. Cuando hay un tiempo límite, el reloj
+virtual puede avanzar hasta el siguiente vencimiento sin ejecutar un bucle
+del invitado. El reloj usa un microsegundo virtual por instrucción retirada;
+no representa la velocidad real del host. `mftb`/`mftbu` y la llamada 147 usan
+un contador coherente de 80 MHz. Los plazos que exceden la precisión admitida
+se detienen explícitamente con `unsupported_timeout`.
+
+Las escrituras condicionales consumen una reserva de 128 bytes; comprueban
+dirección, ancho y valor observado, y actualizan CR0. Las escrituras del
+invitado en ese bloque, las llamadas al sistema y los cambios de contexto
+invalidan la reserva. `sync`, `lwsync`, `eieio` e `isync` respetan el modelo ya
+serializado de memoria e instrucciones. No se implementa un subsistema de
+cachés físicas ni coherencia entre varios PPEs.
+
+La prueba C propia `threads.c` crea tres hijos y verifica señalización,
+difusión a dos esperadores, espera recursiva con vencimiento, resultados de
+unión, errores, mutex ligeros, operaciones atómicas y contador de tiempo.
+Termina con el mismo mensaje y estado 42 en RoEMU y RPCS3. Se comprueba con
+seis tamaños de quantum y dos perfiles de prioridad (577 comprobaciones),
+además de 19 comprobaciones de espera y 32 de reservas/contador/barreras.
 
 ## Referencia RPCS3
 
@@ -142,9 +187,10 @@ implementa automáticamente el arranque de firmware, LV1/LV2 o GameOS en Luau.
 
 La inspección local de `vsh.self` 4.93 mediante RPCS3 permitió obtener su ELF
 y probarlo contra el motor real de RoEMU. Con inicialización TLS a cargo del
-invitado, VSH ejecuta 2 163 instrucciones, crea mutex privados y obtiene una
-reserva de 64 KiB. Se detiene en la llamada 105 (`sys_cond_create`), todavía no
-implementada. No llega a la interfaz ni al arranque completo de GameOS. El
+invitado, VSH ejecuta 4 453 instrucciones, crea mutex y condiciones, usa
+operaciones atómicas y obtiene reservas de memoria. Se detiene en la llamada
+30 (`_sys_process_get_paramsfo`), todavía no implementada. No llega a la
+interfaz ni al arranque completo de GameOS. El
 firmware no se incluye en los ejemplos, la plantilla ni el lugar distribuible.
 
 `RoEmu_BootController.Choose("powerpc")`, también accesible como `"ppc64"`,
