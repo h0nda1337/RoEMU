@@ -12682,5 +12682,9 @@
   {
     "path": "ServerStorage/RoEmu_PowerPC_ELF64",
     "class": "ModuleScript"
+  },
+  {
+    "path": "ServerStorage/RoEmu_PS3_Process",
+    "class": "ModuleScript"
   }
 ]

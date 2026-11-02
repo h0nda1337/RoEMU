@@ -12,6 +12,13 @@
     "checksum": "0103456689ABCDFB",
     "processExitStatus": 42,
     "referenceHostProcessExitCode": 0,
-    "gameOSBootVerified": false
+    "gameOSBootVerified": false,
+    "tlsProcess": {
+      "source": "examples/powerpc/process.c",
+      "profile": "Direct PPU entry, static interpreters, liblv2.sprx:hle and libsysmodule.sprx:hle",
+      "tty": "ROEMU_PPU_TLS_ARGS_OK",
+      "processExitStatus": 42,
+      "referenceHostProcessExitCode": 0
+    }
   }
 }

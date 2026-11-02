@@ -37,3 +37,31 @@ Comprueba la ejecución real, el checksum, ELFv1/PPU/direct dispatch, BSS, pila,
 presupuestos y rechazo atómico de entradas inválidas. El caso de entrada
 directa aporta el TOC de este ejemplo explícitamente; no prueba un binario C
 ELFv2 compilado de forma independiente. No comprueba un arranque de GameOS.
+
+## Proceso PPU con TLS y llamadas al sistema
+
+`process.c` es otra prueba propia. Recibe `argv`/`envp` y metadatos TLS, comprueba
+una variable TLS inicializada y otra inicialmente a cero, modifica valores
+mayores de 2⁵³, escribe `ROEMU_PPU_TLS_ARGS_OK` mediante la llamada 403 y termina
+con estado 42 mediante la llamada 22.
+
+Se compila con las mismas opciones anteriores, añadiendo
+`-ftls-model=local-exec`, y se enlaza con `process.ld`:
+
+```sh
+clang --target=powerpc64-unknown-linux-gnu -mcpu=970 -mabi=elfv1 -O1 \
+  -ffreestanding -fno-builtin -fno-stack-protector -fno-pic \
+  -mno-altivec -mno-vsx -msoft-float -ftls-model=local-exec \
+  -c examples/powerpc/process.c -o build/powerpc/process.o
+ld.lld -m elf64ppc -T examples/powerpc/process.ld \
+  build/powerpc/process.o -o build/powerpc/process-linked.elf
+python examples/powerpc/pack_process.py build/powerpc/process-linked.elf build/powerpc
+luau --codegen -O2 tests/powerpc_process.luau
+```
+
+La muestra compacta incluida en las pruebas tiene 808 bytes. La referencia
+RPCS3 utiliza PPU Interpreter (static), vídeo/audio Null y las bibliotecas
+`liblv2.sprx:hle` y `libsysmodule.sprx:hle`, para entrar directamente al ELF y
+comparar la inicialización HLE. Eso no prueba el arranque mediante bibliotecas
+LLE ni GameOS. El ELF con la disposición original y el compacto conservan las
+mismas instrucciones y el segmento TLS; solo cambia el empaquetado de archivo.

@@ -17,6 +17,7 @@ local function failure(code,message) return false,{code=code,message=message} en
 local function contains(segment,address,bytes)
 	return address>=segment.address and address+bytes<=segment.address+segment.memoryBytes
 end
+local function alignUp(value,alignment) return math.ceil(value/alignment)*alignment end
 function ELF.Load(cpu,data,options)
 	options=options or {}
 	if type(options)~="table" then return failure("elf-options","Loader options must be a table") end
@@ -44,11 +45,20 @@ function ELF.Load(cpu,data,options)
 	end
 	if mode~="direct" and mode~="elfv1" and mode~="ps3-ppu" then return failure("elf-entry-mode","Unsupported entry mode") end
 	if (osabi==0x66 and mode~="ps3-ppu") or (abi==1 and mode=="direct") or (abi==2 and mode=="elfv1") then return failure("elf-entry-mode","Entry mode conflicts with the declared ELF ABI") end
-	local segments={}
+	local segments,tls={},nil
 	for i=0,count-1 do
 		local at=phoff+i*56
 		local kind=be32(data,at)
-		if kind==2 or kind==3 or kind==7 then return failure("elf-runtime-required","Dynamic linking, interpreters and TLS are not implemented") end
+		if kind==2 or kind==3 then return failure("elf-runtime-required","Dynamic linking and interpreters are not implemented") end
+		if kind==7 then
+			if options.tlsMode~="static" and options.tlsMode~="guest" then return failure("elf-runtime-required","TLS requires an explicit process initialization mode") end
+			if tls then return failure("elf-tls","Multiple TLS templates are not implemented") end
+			local offset,address,fileBytes,memoryBytes,alignment=low64(data,at+8),low64(data,at+16),low64(data,at+32),low64(data,at+40),low64(data,at+48)
+			if offset==nil or address==nil or fileBytes==nil or memoryBytes==nil or alignment==nil then return failure("elf-address-width","TLS field exceeds the flat RAM window") end
+			if fileBytes>memoryBytes or offset+fileBytes>size or address+memoryBytes>ramBytes then return failure("elf-tls","Invalid TLS template bounds") end
+			if alignment>1 and (band(alignment,alignment-1)~=0 or address%alignment~=offset%alignment) then return failure("elf-tls","Invalid TLS template alignment") end
+			tls={offset=offset,address=address,fileBytes=fileBytes,memoryBytes=memoryBytes,alignment=math.max(alignment,1),mode=options.tlsMode}
+		end
 		if kind==1 then
 			local offset,address,fileBytes,memoryBytes,align=low64(data,at+8),low64(data,at+16),low64(data,at+32),low64(data,at+40),low64(data,at+48)
 			if offset==nil or address==nil or fileBytes==nil or memoryBytes==nil or align==nil then return failure("elf-address-width","A LOAD field exceeds the flat RAM window") end
@@ -64,6 +74,14 @@ function ELF.Load(cpu,data,options)
 		end
 	end
 	if #segments==0 then return failure("elf-no-load","ELF has no nonempty LOAD segments") end
+	if tls then
+		local found=false
+		for _,s in ipairs(segments) do
+			if contains(s,tls.address,tls.memoryBytes) and tls.address+tls.fileBytes<=s.address+s.fileBytes
+				and s.offset+tls.address-s.address==tls.offset and band(s.flags,4)~=0 then found=true;break end
+		end
+		if not found then return failure("elf-tls","TLS template must belong to a readable LOAD segment") end
+	end
 	local function source(address,bytes)
 		for _,s in ipairs(segments) do
 			if contains(s,address,bytes) and band(s.flags,4)~=0 and address+bytes<=s.address+s.fileBytes then return s.offset+address-s.address end
@@ -90,9 +108,26 @@ function ELF.Load(cpu,data,options)
 		or stackBytes<256 or stackTop>ramBytes or stackTop-stackBytes<0 then return failure("elf-stack","Invalid standalone stack range") end
 	local bottom=stackTop-stackBytes
 	for _,s in ipairs(segments) do if bottom<s.address+s.memoryBytes and s.address<stackTop then return failure("elf-stack-overlap","Standalone stack overlaps LOAD memory") end end
+	local stackReserved=options.stackReservedBytes or 0
+	if type(stackReserved)~="number" or stackReserved%16~=0 or stackReserved<0 or stackReserved+0x70>stackBytes then return failure("elf-stack","Invalid process argument reservation") end
+	if tls and tls.mode=="static" then
+		local alignment=math.max(tls.alignment,16)
+		local prefix=alignUp(0x30,alignment)
+		local residue=tls.address%tls.alignment
+		local bytes=alignUp(prefix+residue+tls.memoryBytes,alignment)
+		local allocation=options.tlsAddress or math.floor((bottom-bytes)/alignment)*alignment
+		if type(allocation)~="number" or allocation%alignment~=0 or allocation<0 or allocation+bytes>ramBytes then return failure("elf-tls-allocation","Invalid static TLS allocation") end
+		if allocation<stackTop and bottom<allocation+bytes then return failure("elf-tls-overlap","TLS allocation overlaps stack") end
+		for _,s in ipairs(segments) do if allocation<s.address+s.memoryBytes and s.address<allocation+bytes then return failure("elf-tls-overlap","TLS allocation overlaps LOAD memory") end end
+		tls.allocation,tls.allocationBytes=allocation,bytes
+		tls.blockBase,tls.dataAddress=allocation+prefix,allocation+prefix+residue
+		tls.threadPointer=tls.blockBase+0x7000
+		if tls.threadPointer>0xFFFFFFFF then return failure("elf-tls-allocation","TLS thread pointer exceeds the address window") end
+	end
 	local returnAddress=options.returnAddress or 0
 	if type(returnAddress)~="number" or returnAddress%4~=0 or returnAddress<0 or returnAddress+4>ramBytes then return failure("elf-return-address","Invalid standalone return address") end
 	for _,s in ipairs(segments) do if returnAddress<s.address+s.memoryBytes and s.address<returnAddress+4 then return failure("elf-return-overlap","Standalone return address overlaps LOAD memory") end end
+	if tls and tls.allocation and returnAddress<tls.allocation+tls.allocationBytes and tls.allocation<returnAddress+4 then return failure("elf-return-overlap","Standalone return address overlaps static TLS") end
 	-- Commit only after validating every segment, descriptor and stack field.
 	-- A caller may load from a view of the same RAM that is being populated.
 	if data==cpu.ram then data=buffer.fromstring(buffer.tostring(data)) end
@@ -101,15 +136,21 @@ function ELF.Load(cpu,data,options)
 		if s.memoryBytes>s.fileBytes then buffer.fill(cpu.ram,s.address+s.fileBytes,0,s.memoryBytes-s.fileBytes) end
 	end
 	buffer.fill(cpu.ram,bottom,0,stackBytes)
+	if tls and tls.allocation then
+		buffer.fill(cpu.ram,tls.allocation,0,tls.allocationBytes)
+		buffer.copy(cpu.ram,tls.dataAddress,data,tls.offset,tls.fileBytes)
+	end
 	for index=0,31 do cpu:setRegister(index,0,0) end
-	cpu:setRegister(1,0,stackTop-0x70);cpu:setRegister(2,0,toc);cpu:setRegister(11,0,environment)
+	cpu:setRegister(1,0,stackTop-stackReserved-0x70);cpu:setRegister(2,0,toc);cpu:setRegister(11,0,environment)
+	if tls and tls.threadPointer then cpu:setRegister(13,0,tls.threadPointer) end
 	if mode=="direct" then cpu:setRegister(12,0,code) end
 	cpu.pcHi,cpu.pcLo=0,code;cpu.lrHi,cpu.lrLo=0,returnAddress
 	cpu.ctrHi,cpu.ctrLo,cpu.cr,cpu.xer,cpu.instructions=0,0,0,0,0
 	local report={format="ELF64-BE-PPC64",osabi=osabi,entryMode=mode,descriptorAddress=mode~="direct" and entry or nil,
 		entry=code,toc=toc,environment=environment,segments=segments,stackTop=stackTop,stackBytes=stackBytes,
-		returnAddress=returnAddress,standaloneOnly=true,ps3BootSupported=false}
+		returnAddress=returnAddress,tls=tls,stackReservedBytes=stackReserved,standaloneOnly=true,ps3BootSupported=false}
 	cpu.loadedImage=report
+	cpu.process=nil
 	return true,report
 end
 return ELF

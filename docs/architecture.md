@@ -30,6 +30,8 @@ de instrucciones se renuevan por instrucción para respetar código modificado.
 
 `RoEmu_PowerPC_CPU`, `RoEmu_PowerPC_ELF64` y `RoEmu_PowerPC_Platform` exponen una
 base entera PowerPC64 con RAM plana y carga de ejecutables ELF64 estáticos.
+`RoEmu_PS3_Process` añade la entrada PPU, TLS y un subconjunto explícito de
+servicios de proceso, consola, memoria y mutex privados.
 El perfil PS3 no es arrancable y
 declara por separado las capacidades que faltan. Consulta
 [PowerPC64 y perfil PS3](powerpc-ps3.md).

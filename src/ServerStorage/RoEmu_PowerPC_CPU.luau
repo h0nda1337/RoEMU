@@ -10,6 +10,39 @@ local function add(ah,al,bh,bl)
 	local low=al+bl
 	return band(ah+bh+math.floor(low/U32),0xFFFFFFFF),band(low,0xFFFFFFFF)
 end
+local function addCarry(ah,al,bh,bl,carry)
+	local low=al+bl+carry
+	local high=ah+bh+math.floor(low/U32)
+	return band(high,0xFFFFFFFF),band(low,0xFFFFFFFF),high>=U32
+end
+local arithmetic={ [266]=true,[10]=true,[138]=true,[234]=true,[202]=true,
+	[40]=true,[8]=true,[136]=true,[232]=true,[200]=true,[104]=true }
+local function divideUnsigned(ah,al,bh,bl)
+	local qh,ql,rh,rl=0,0,0,0
+	for bit=63,0,-1 do
+		local carry=rshift(rh,31)
+		rh=bor(lshift(rh,1),rshift(rl,31))
+		rl=bor(lshift(rl,1),band(rshift(bit>=32 and ah or al,bit%32),1))
+		if carry~=0 or rh>bh or (rh==bh and rl>=bl) then
+			rh,rl=addCarry(rh,rl,bnot(bh),bnot(bl),1)
+			if bit>=32 then qh=bor(qh,lshift(1,bit-32)) else ql=bor(ql,lshift(1,bit)) end
+		end
+	end
+	return qh,ql
+end
+local function multiply(ah,al,bh,bl,signed)
+	local a={band(al,65535),rshift(al,16),band(ah,65535),rshift(ah,16)}
+	local b={band(bl,65535),rshift(bl,16),band(bh,65535),rshift(bh,16)}
+	local parts=table.create(8,0)
+	for i=1,4 do for j=1,4 do parts[i+j-1]+=a[i]*b[j] end end
+	for i=1,7 do local carry=math.floor(parts[i]/65536);parts[i]%=65536;parts[i+1]+=carry end
+	local high,low=band(parts[8]*65536+parts[7],0xFFFFFFFF),parts[6]*65536+parts[5]
+	if signed then
+		if ah>=0x80000000 then high,low=addCarry(high,low,bnot(bh),bnot(bl),1) end
+		if bh>=0x80000000 then high,low=addCarry(high,low,bnot(ah),bnot(al),1) end
+	end
+	return parts[4]*65536+parts[3],parts[2]*65536+parts[1],high,low
+end
 local function signed16(value) return value>=32768 and value-65536 or value end
 local function extend(value) return value<0 and 0xFFFFFFFF or 0,band(value,0xFFFFFFFF) end
 local function shiftLeft(high,low,amount)
@@ -50,6 +83,15 @@ end
 local function writeBE(data,address,bytes,value)
 	for i=bytes-1,0,-1 do buffer.writeu8(data,address+i,band(value,255));value=math.floor(value/256) end
 end
+-- X-form integer memory operations: width, store, update, signed load.
+local indexedMemory={
+	[21]={8},[53]={8,false,true},[23]={4},[55]={4,false,true},
+	[87]={1},[119]={1,false,true},[279]={2},[311]={2,false,true},
+	[343]={2,false,false,true},[375]={2,false,true,true},
+	[341]={4,false,false,true},[373]={4,false,true,true},
+	[149]={8,true},[181]={8,true,true},[151]={4,true},[183]={4,true,true},
+	[215]={1,true},[247]={1,true,true},[407]={2,true},[439]={2,true,true},
+}
 function CPU.new(options)
 	options=options or {}
 	local self=setmetatable({ram=buffer.create(options.ramBytes or 1024*1024),
@@ -104,7 +146,25 @@ function CPU:step()
 	local immediate=band(word,65535)
 	local nextHi,nextLo=add(self.pcHi,self.pcLo,0,4)
 	local function unsupported() return fault("unsupported_instruction","PowerPC instruction is outside the implemented integer subset",word) end
-	if op==14 or op==15 then
+	if op==17 then
+		if word~=0x44000002 then return unsupported() end
+		-- User-mode trap event. The process host explicitly commits a supported
+		-- call; architectural supervisor exception delivery is not implemented.
+		local event=fault("system_call","PowerPC sc 0",word)
+		event.resumeHi,event.resumeLo=nextHi,nextLo
+		return event
+	elseif op==7 then
+		local ah,al=self:getRegister(ra);local bh,bl=extend(signed16(immediate))
+		local high,low=multiply(ah,al,bh,bl,false);self:setRegister(rt,high,low)
+	elseif op==8 or op==12 or op==13 then
+		local ah,al=self:getRegister(ra);local bh,bl=extend(signed16(immediate))
+		local high,low,carry
+		if op==8 then high,low,carry=addCarry(bnot(ah),bnot(al),bh,bl,1)
+		else high,low,carry=addCarry(ah,al,bh,bl,0) end
+		self:setRegister(rt,high,low)
+		self.xer=bor(band(self.xer,0xDFFFFFFF),carry and 0x20000000 or 0)
+		if op==13 then self:record(high,low) end
+	elseif op==14 or op==15 then
 		local bh,bl=extend(signed16(immediate)*(op==15 and 65536 or 1))
 		local ah,al=0,0;if ra~=0 then ah,al=self:getRegister(ra) end
 		self:setRegister(rt,add(ah,al,bh,bl))
@@ -160,6 +220,20 @@ function CPU:step()
 	elseif op==16 or op==19 then
 		local targetHi,targetLo
 		local bo,bi=rt,ra
+		local control=op==19 and band(rshift(word,1),1023) or -1
+		if control==0 then
+			local to,from=band(rshift(word,23),7),band(rshift(word,18),7)
+			local shift=28-to*4
+			self.cr=bor(band(self.cr,bnot(lshift(15,shift))),lshift(band(rshift(self.cr,28-from*4),15),shift))
+		elseif control==257 or control==129 or control==289 or control==225 or control==33 or control==449 or control==417 or control==193 then
+			local a,b=band(rshift(self.cr,31-ra),1),band(rshift(self.cr,31-rb),1)
+			local value
+			if control==257 then value=band(a,b) elseif control==129 then value=band(a,1-b)
+			elseif control==289 then value=1-bxor(a,b) elseif control==225 then value=1-band(a,b)
+			elseif control==33 then value=1-bor(a,b) elseif control==449 then value=bor(a,b)
+			elseif control==417 then value=bor(a,1-b) else value=bxor(a,b) end
+			self.cr=bor(band(self.cr,bnot(lshift(1,31-rt))),lshift(value,31-rt))
+		else
 		if op==16 then
 			local dh,dl=extend(signed16(band(word,0xFFFC)))
 			targetHi,targetLo=dh,dl
@@ -172,6 +246,7 @@ function CPU:step()
 		end
 		if band(word,1)~=0 then self.lrHi,self.lrLo=nextHi,nextLo end
 		if self:branchCondition(bo,bi) then nextHi,nextLo=targetHi,targetLo end
+		end
 	elseif (op>=32 and op<=45) or op==58 or op==62 then
 		local storing=(op>=36 and op<=39) or op==44 or op==45 or op==62
 		local bytes=op>=40 and 2 or 4
@@ -206,9 +281,127 @@ function CPU:step()
 	elseif op==31 then
 		local xo=band(rshift(word,1),1023)
 		local high,low
-		if xo==266 then
+		local memory=indexedMemory[xo]
+		if memory then
+			local bytes,storing,updating,signed=memory[1],memory[2],memory[3],memory[4]
+			if band(word,1)~=0 or (updating and (ra==0 or (not storing and ra==rt))) then return unsupported() end
+			local ah,al=0,0;if ra~=0 then ah,al=self:getRegister(ra) end
+			local bh,bl=self:getRegister(rb)
+			local addressHi,address=add(ah,al,bh,bl)
+			if addressHi~=0 or address%bytes~=0 or address+bytes>buffer.len(self.ram) then return fault("memory_fault","indexed address outside aligned flat RAM",word) end
+			if storing then
+				local vh,vl=self:getRegister(rt)
+				if bytes==8 then writeBE(self.ram,address,4,vh);writeBE(self.ram,address+4,4,vl)
+				else writeBE(self.ram,address,bytes,vl) end
+			else
+				local vh,vl=0,0
+				if bytes==8 then vh,vl=readBE(self.ram,address,4),readBE(self.ram,address+4,4)
+				else
+					vl=readBE(self.ram,address,bytes)
+					if signed then
+						if bytes==2 then vh,vl=extend(signed16(vl)) else vh,vl=extend(vl>=0x80000000 and vl-U32 or vl) end
+					end
+				end
+				self:setRegister(rt,vh,vl)
+			end
+			if updating then self:setRegister(ra,addressHi,address) end
+		elseif xo==19 or xo==144 then
+			if band(word,1)~=0 then return unsupported() end
+			local fields=band(rshift(word,12),255)
+			local one=band(word,0x100000)~=0
+			if one and (fields==0 or band(fields,fields-1)~=0) then return unsupported() end
+			if xo==19 then
+				if not one and fields~=0 then return unsupported() end
+				low=self.cr
+				if one then
+					low=0
+					for i=0,7 do if band(fields,lshift(1,7-i))~=0 then low=band(self.cr,lshift(15,28-i*4));break end end
+				end
+				self:setRegister(rt,0,low)
+			else
+				local _,value=self:getRegister(rt)
+				for i=0,7 do
+					if band(fields,lshift(1,7-i))~=0 then local mask=lshift(15,28-i*4);self.cr=bor(band(self.cr,bnot(mask)),band(value,mask)) end
+				end
+			end
+		elseif arithmetic[band(xo,511)] then
+			local operation=band(xo,511)
+			local unary=operation==234 or operation==202 or operation==232 or operation==200 or operation==104
+			if unary and rb~=0 then return unsupported() end
 			local ah,al=self:getRegister(ra);local bh,bl=self:getRegister(rb)
-			high,low=add(ah,al,bh,bl);self:setRegister(rt,high,low)
+			local subtract=operation==40 or operation==8 or operation==136 or operation==232 or operation==200 or operation==104
+			local carryIn=(operation==138 or operation==234 or operation==202 or operation==136 or operation==232 or operation==200)
+				and (band(self.xer,0x20000000)~=0 and 1 or 0) or (subtract and 1 or 0)
+			if operation==234 or operation==232 then bh,bl=0xFFFFFFFF,0xFFFFFFFF
+			elseif unary then bh,bl=0,0 end
+			local signedA,signedB=ah>=0x80000000,bh>=0x80000000
+			local carry
+			if subtract then high,low,carry=addCarry(bnot(ah),bnot(al),bh,bl,carryIn)
+			else high,low,carry=addCarry(ah,al,bh,bl,carryIn) end
+			if operation~=266 and operation~=40 and operation~=104 then self.xer=bor(band(self.xer,0xDFFFFFFF),carry and 0x20000000 or 0) end
+			if xo>=512 then
+				local negative=high>=0x80000000
+				local overflow=(subtract and signedA~=signedB and negative~=signedB) or (not subtract and signedA==signedB and negative~=signedA)
+				self.xer=bor(band(self.xer,0xBFFFFFFF),overflow and 0xC0000000 or 0)
+			end
+			self:setRegister(rt,high,low)
+			if band(word,1)~=0 then self:record(high,low) end
+		elseif band(xo,511)==233 or band(xo,511)==235 or xo==9 or xo==73 or xo==11 or xo==75 then
+			local operation=band(xo,511)
+			local ah,al=self:getRegister(ra);local bh,bl=self:getRegister(rb)
+			local wordMode=operation==235 or operation==11 or operation==75
+			local signed=operation~=9 and operation~=11
+			if wordMode then
+				ah,bh=0,0
+				if signed then ah,al=extend(al>=0x80000000 and al-U32 or al);bh,bl=extend(bl>=0x80000000 and bl-U32 or bl) end
+			end
+			local ph,pl,uh,ul=multiply(ah,al,bh,bl,signed)
+			local overflow=false
+			if operation==9 or operation==73 then high,low=uh,ul
+			elseif operation==11 then high,low=0,ph
+			elseif operation==75 then high,low=0,ph
+			elseif operation==235 then
+				high,low=ph,pl;overflow=ph~=(pl>=0x80000000 and 0xFFFFFFFF or 0)
+			else high,low=ph,pl;local fill=ph>=0x80000000 and 0xFFFFFFFF or 0;overflow=uh~=fill or ul~=fill end
+			if xo>=512 then self.xer=bor(band(self.xer,0xBFFFFFFF),overflow and 0xC0000000 or 0) end
+			self:setRegister(rt,high,low)
+			if band(word,1)~=0 then self:record(high,low) end
+		elseif band(xo,511)==457 or band(xo,511)==489 or band(xo,511)==459 or band(xo,511)==491 then
+			local operation=band(xo,511)
+			local ah,al=self:getRegister(ra);local bh,bl=self:getRegister(rb)
+			local wide=operation==457 or operation==489
+			local signed=operation==489 or operation==491
+			local overflow=false
+			if wide then
+				overflow=(bh==0 and bl==0) or (signed and ah==0x80000000 and al==0 and bh==0xFFFFFFFF and bl==0xFFFFFFFF)
+				if overflow then high,low=0,0
+				else
+					local negativeA,negativeB=signed and ah>=0x80000000,signed and bh>=0x80000000
+					if negativeA then ah,al=addCarry(bnot(ah),bnot(al),0,0,1) end
+					if negativeB then bh,bl=addCarry(bnot(bh),bnot(bl),0,0,1) end
+					high,low=divideUnsigned(ah,al,bh,bl)
+					if negativeA~=negativeB then high,low=addCarry(bnot(high),bnot(low),0,0,1) end
+				end
+			else
+				overflow=bl==0 or (signed and al==0x80000000 and bl==0xFFFFFFFF)
+				if overflow then high,low=0,0
+				else
+					if signed then al=al>=0x80000000 and al-U32 or al;bl=bl>=0x80000000 and bl-U32 or bl end
+					local value=math.floor(math.abs(al)/math.abs(bl))
+					if (al<0)~=(bl<0) then value=-value end
+					high,low=0,band(value,0xFFFFFFFF)
+				end
+			end
+			if xo>=512 then self.xer=bor(band(self.xer,0xBFFFFFFF),overflow and 0xC0000000 or 0) end
+			self:setRegister(rt,high,low)
+			if band(word,1)~=0 then self:record(high,low) end
+		elseif xo==954 or xo==922 or xo==986 then
+			local _,value=self:getRegister(rt)
+			if xo==954 then value=band(value,255);if value>=128 then value-=256 end
+			elseif xo==922 then value=signed16(band(value,65535))
+			elseif value>=0x80000000 then value-=U32 end
+			high,low=extend(value);self:setRegister(ra,high,low)
+			if band(word,1)~=0 then self:record(high,low) end
 		elseif xo==28 or xo==444 or xo==316 or xo==124 then
 			local ah,al=self:getRegister(rt);local bh,bl=self:getRegister(rb)
 			if xo==28 then high,low=band(ah,bh),band(al,bl)
@@ -264,7 +457,7 @@ function CPU:step()
 				if spr==1 then self.xer=band(low,0xFFF3FFFF) elseif spr==8 then self.lrHi,self.lrLo=high,low else self.ctrHi,self.ctrLo=high,low end
 			end
 		else return unsupported() end
-		if (xo==266 or xo==28 or xo==444 or xo==316 or xo==124) and band(word,1)~=0 then self:record(high,low) end
+		if (xo==28 or xo==444 or xo==316 or xo==124) and band(word,1)~=0 then self:record(high,low) end
 	else return unsupported() end
 	self.pcHi,self.pcLo=nextHi,nextLo
 	self.instructions+=1
