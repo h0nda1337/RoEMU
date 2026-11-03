@@ -12698,5 +12698,9 @@
   {
     "path": "ServerStorage/RoEmu_PowerPC_FPU",
     "class": "ModuleScript"
+  },
+  {
+    "path": "ServerStorage/RoEmu_PS3_RWLock",
+    "class": "ModuleScript"
   }
 ]

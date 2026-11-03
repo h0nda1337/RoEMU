@@ -119,7 +119,10 @@ local indexedMemory={
 }
 function CPU.new(options)
 	options=options or {}
+	local pageBytes=options.dataPageBytes or 4096
+	assert(type(pageBytes)=="number" and pageBytes>=4096 and pageBytes<=16777216 and pageBytes%1==0 and band(pageBytes,pageBytes-1)==0,"PowerPC flat data page size")
 	local self=setmetatable({ram=buffer.create(options.ramBytes or 1024*1024),
+		dataPageBytes=pageBytes,
 		hi=table.create(32,0),lo=table.create(32,0),pcHi=0,pcLo=options.entry or 0,
 		fhi=table.create(32,0),flo=table.create(32,0),fpscr=0,
 		lrHi=0,lrLo=0,ctrHi=0,ctrLo=0,cr=0,xer=0,instructions=0},CPU)
@@ -304,7 +307,8 @@ function CPU:step()
 		local ah,al=0,0;if ra~=0 then ah,al=self:getRegister(ra) end
 		local dh,dl=extend(displacement)
 		local high,address=add(ah,al,dh,dl)
-		if high~=0 or address%bytes~=0 or address+bytes>buffer.len(self.ram) then return fault("memory_fault","data address outside aligned flat RAM",word) end
+		if high~=0 or address+bytes>buffer.len(self.ram) then return fault("memory_fault","data address outside flat RAM",word) end
+		if floating and (address%4~=0 or address%self.dataPageBytes+bytes>self.dataPageBytes) then return fault("memory_fault","Cell FP access is not word aligned or crosses a data page",word) end
 		if storing then
 			local vh,vl=self:getRegister(rt)
 			if floating then vh,vl=self:getFloatingRegister(rt) end
@@ -364,7 +368,8 @@ function CPU:step()
 			local ah,al=0,0;if ra~=0 then ah,al=self:getRegister(ra) end
 			local bh,bl=self:getRegister(rb)
 			local addressHi,address=add(ah,al,bh,bl)
-			if addressHi~=0 or address%bytes~=0 or address+bytes>buffer.len(self.ram) then return fault("memory_fault","indexed address outside aligned flat RAM",word) end
+			if addressHi~=0 or address+bytes>buffer.len(self.ram) then return fault("memory_fault","indexed address outside flat RAM",word) end
+			if floating and (address%4~=0 or address%self.dataPageBytes+bytes>self.dataPageBytes) then return fault("memory_fault","Cell FP access is not word aligned or crosses a data page",word) end
 			if storing then
 				local vh,vl=self:getRegister(rt)
 				if floating then vh,vl=self:getFloatingRegister(rt) end

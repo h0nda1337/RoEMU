@@ -138,3 +138,24 @@ en RoEMU y en RPCS3. No comprueba toda la FPU ni entrega de excepciones MSR.
 ```sh
 luau --codegen -O2 tests/powerpc_fp_compute.luau
 ```
+
+## Lectores, escritores y alineación Cell
+
+`rwlocks.c` crea nueve hijos y verifica lectores concurrentes, preferencia de
+escritores, FIFO/prioridad, tiempos límite, desbloqueos y liberación de recursos.
+El argumento `P` elige prioridad. Los mensajes son `ROEMU_PPU_RWLOCK_FIFO_OK`
+y `ROEMU_PPU_RWLOCK_PRIORITY_OK`; ambos perfiles salen con estado 42 en RoEMU y
+RPCS3. Se compila y enlaza como `metadata.c`; el ELF compacto propio tiene
+5 632 bytes. Las pruebas ejecutan seis tamaños de quantum por perfil y casos
+adicionales con colas observadas en los contextos reales del proceso.
+
+```sh
+luau --codegen -O2 tests/powerpc_rwlocks.luau
+luau --codegen -O2 tests/powerpc_unaligned.luau
+```
+
+Los vectores de memoria usan RAM cacheable: enteros sin alineación natural,
+FPR alineados a cuatro bytes y reservas con alineación natural. Incluyen cruces
+de líneas y páginas, actualización de registros y ausencia de escrituras
+parciales al fallar. Los vectores públicos conservan ventanas con guardas de
+64 bytes para caber en el límite de `ModuleScript.Source` de Studio.

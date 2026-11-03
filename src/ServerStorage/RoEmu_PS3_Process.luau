@@ -5,7 +5,8 @@
 local ELF=script and require(script.Parent.RoEmu_PowerPC_ELF64) or require("./RoEmu_PowerPC_ELF64")
 local Scheduler=script and require(script.Parent.RoEmu_PS3_Scheduler) or require("./RoEmu_PS3_Scheduler")
 local SFO=script and require(script.Parent.RoEmu_PS3_SFO) or require("./RoEmu_PS3_SFO")
-local Process={VERSION="0.3.0"}
+local RW=script and require(script.Parent.RoEmu_PS3_RWLock) or require("./RoEmu_PS3_RWLock")
+local Process={VERSION="0.4.0"}
 local function failure(code,message) return false,{code=code,message=message} end
 local function align16(value) return math.ceil(value/16)*16 end
 local function put32(data,at,value)
@@ -83,6 +84,7 @@ function Process.Load(cpu,data,options)
 		lightMutexes={},nextLightMutex=0x95000000,lightMutexCount=0,
 		allocations={},paramSFO=metadata,titleId=titleId,trace=options.trace==true and {} or nil,bootSupported=false,importsLinked=false}
 	cpu.process=state
+	RW.Init(state)
 	Scheduler.Init(cpu,state,priority,quantum)
 	cpu.readTimeBase=function()
 		local lower=(state.clockUS%4294967296)*80
@@ -178,6 +180,7 @@ local function refreshWaits(state)
 			elseif wait.kind=="light-mutex" then
 				takeWaiter(state,state.lightMutexes[wait.mutex].waiters,1,thread.id)
 				Scheduler.Wake(thread,0x8001000B);state.readyChange=true
+			elseif wait.kind=="rwlock-read" or wait.kind=="rwlock-write" then RW.Expire(state,thread)
 			elseif wait.kind=="sleep" then Scheduler.Wake(thread,0);state.readyChange=true
 			end
 		end
@@ -436,6 +439,27 @@ local function call(cpu,trap)
 				elseif not transferCondition(state,condition,target) then result=0x80010009 end
 			elseif number==108 then transferCondition(state,condition)
 			else while transferCondition(state,condition) do end end
+		end
+	elseif number>=120 and number<=127 then
+		local idHi,id=cpu:getRegister(3)
+		if number==120 then
+			local attrHi,attr=cpu:getRegister(4)
+			if idHi~=0 or attrHi~=0 or id==0 or attr==0 or not access(cpu,id,4,true) or not access(cpu,attr,32,false) then result=0x8001000D
+			else
+				local protocol,shared=get32(cpu.ram,attr),get32(cpu.ram,attr+4)
+				local keyHi,key,flags=get32(cpu.ram,attr+8),get32(cpu.ram,attr+12),get32(cpu.ram,attr+16)
+				if (protocol~=1 and protocol~=2) or (shared~=0x100 and shared~=0x200) then result=0x80010002
+				elseif shared==0x100 and ((keyHi==0 and key==0) or flags<1 or flags>3) then result=0x80010002
+				elseif shared==0x100 then return {kind="unsupported_rwlock_ipc",number=number,pc=cpu.pcLo}
+				else
+					local handle;result,handle=RW.Create(state,protocol,buffer.readstring(cpu.ram,attr+24,8))
+					if handle then put32(cpu.ram,id,handle) end
+				end
+			end
+		else
+			local timeoutHi,timeout=cpu:getRegister(4)
+			if idHi==0 then result=RW.Call(state,number,id,timeoutHi,timeout) else result=0x80010005 end
+			if result==nil then return {kind="unsupported_timeout",number=number,pc=cpu.pcLo} end
 		end
 	elseif number==147 then result=80000000
 	elseif number==141 or number==142 then

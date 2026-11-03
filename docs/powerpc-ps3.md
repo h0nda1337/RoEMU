@@ -29,8 +29,11 @@ consume la selección de arquitectura: después se puede elegir RV32 o i386.
 - Presupuestos de ejecución y resultados explícitos para instrucciones o
   direcciones que todavía no soporta.
 
-La memoria es una ventana de RAM plana, no un espacio virtual completo de
-64 bits. Los accesos exigen alineación natural. Los fallos se devuelven al
+La memoria es una ventana de RAM cacheable plana, no un espacio virtual completo
+de 64 bits. Los accesos enteros ordinarios admiten direcciones sin alineación
+natural, incluidos cruces de líneas y páginas. Las operaciones de reserva
+mantienen alineación natural; los accesos FPR exigen alineación a palabra de
+cuatro bytes y no pueden cruzar la página de datos configurada. Los fallos se devuelven al
 anfitrión; todavía no se entregan como excepciones arquitectónicas al invitado.
 No se implementan privilegios, MMU, AltiVec ni el juego completo de instrucciones.
 La FPU todavía carece de suma, multiplicación, operaciones fusionadas y otras
@@ -46,6 +49,14 @@ Otros 729 casos contrastan transferencias FPR y precargas, incluidos ceros con
 signo, subnormales, infinitos y NaN señalizadores. Las conversiones de formato
 en memoria son operaciones de bits de la ISA; no ejecutan aritmética del host.
 Ese contraste no certifica una implementación de Cell ni de toda PowerPC.
+
+Las reglas de RAM cacheable siguen el
+[manual de programación de Cell, secciones 6.1.3 y 9.5.8](https://www.cresco.enea.it/LA1/cresco_sp14_ylichron/CBE-docs/CellBE_PXCell_Handbook_v1.11_12May08_pub.pdf).
+No se modelan RAM con caché inhibida, HID4 ni los ciclos de microcódigo.
+`Platform.new({dataPageBytes=4096})` permite configurar el tamaño usado para
+comprobar cruces FPR; el valor predeterminado es 4 KiB. Esto no añade una MMU.
+Se contrastaron 1 032 accesos legales con QEMU 970; 80 vectores y las condiciones
+de fallo específicas de Cell también se ejecutaron en Studio.
 
 `RoEmu_PowerPC_ELF64` carga ELF64 big endian estáticos (`ET_EXEC`, `EM_PPC64`)
 en RAM plana. Reconoce ELFv1, entrada directa declarada como ABI 2 y el
@@ -131,6 +142,8 @@ llamada implementada y avanza PC/contador. Una llamada desconocida devuelve
 - Mutex ligeros del núcleo (95–99/117): objetos y señales, colas de espera,
   intento sin bloqueo, tiempos límite y señal de reintento. El protocolo
   `SYS_SYNC_RETRY` y las condiciones ligeras todavía se detienen explícitamente.
+- Bloqueos privados de lectura/escritura (120–127): creación/destrucción,
+  lectura y escritura, intentos, desbloqueo, FIFO/prioridad y tiempos límite.
 - Esperas de temporizador (141/142) y frecuencia del contador (147).
 - Memoria (348/349): reservas reales de 64 KiB/1 MiB dentro de la RAM disponible,
   sin superponer imágenes/pila/TLS, inicialización a cero y liberación.
@@ -153,6 +166,23 @@ pruebas incluyen archivos truncados, punteros inválidos y rechazo de una carga
 sin alterar un proceso existente. El planificador guarda los 32 FPR y FPSCR
 por hilo; otro ensayo verifica su aislamiento durante 311 cambios de contexto
 en un programa compilado de cuatro hilos. `completeFloatingPoint` sigue en `false`.
+
+`RoEmu_PS3_RWLock` usa un contador común para lectores y un propietario para
+el escritor. Los escritores en espera preceden a los nuevos lectores; el
+protocolo elige al siguiente escritor por llegada o prioridad. Al vencer la
+última espera de escritura se admiten lectores pendientes, aunque otro lector
+siga activo. Las esperas infinitas aparcan el proceso. La reentrada de un
+escritor devuelve `CELL_EDEADLK`; una lectura bajo la propia escritura puede
+esperar o vencer. No se imponen reglas de propietario individual a los lectores.
+Los objetos compartidos por IPC se detienen explícitamente; esta base admite
+hasta 4 096 bloqueos privados activos. Los atributos válidos se leen por bytes,
+con validación de todo el rango antes de asignar el identificador.
+
+La prueba propia `rwlocks.c` crea nueve hijos, comprueba lectores concurrentes,
+preferencia y orden de escritores, tiempos límite y desbloqueo de lectores
+desde otro hilo. Ambos perfiles terminan con mensajes distintos y estado 42
+en RoEMU y RPCS3. Hay 292 comprobaciones, con seis tamaños de quantum, además
+de pruebas de colas reales, punteros y suspensión sin sondeo.
 
 ## Cálculo de coma flotante
 
@@ -249,10 +279,10 @@ implementa automáticamente el arranque de firmware, LV1/LV2 o GameOS en Luau.
 
 La inspección local de `vsh.self` 4.93 mediante RPCS3 permitió obtener su ELF
 y probarlo contra el motor real de RoEMU. Con inicialización TLS a cargo del
-invitado y sin inventar metadatos de título, VSH ejecuta 35 212 instrucciones,
+invitado y sin inventar metadatos de título, VSH ejecuta 36 303 instrucciones,
 crea mutex y condiciones, usa operaciones atómicas, reservas de memoria y
-transferencias y cálculo FPR. Se detiene en la llamada 120, `sys_rwlock_create`,
-en PC `0x001B29E0`, aún pendiente. No llega a la
+transferencias/cálculo FPR y crea bloqueos de lectura/escritura. Se detiene en
+la llamada 128, `sys_event_queue_create`, en PC `0x00163B78`, aún pendiente. No llega a la
 interfaz ni al arranque completo de GameOS. El
 firmware no se incluye en los ejemplos, la plantilla ni el lugar distribuible.
 

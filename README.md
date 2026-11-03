@@ -13,7 +13,7 @@ y la distribución de la interfaz original.
   estática comprobada con un programa C propio.
   Incluye TLS, consola, hilos PPU, condiciones, metadatos SFO y transferencias
   exactas de registros de coma flotante, conversiones y división IEEE,
-  además de memoria/mutex básicos.
+  además de memoria, mutex y bloqueos de lectura/escritura.
   El selector ofrece el perfil PS3 en desarrollo; **CellOS/GameOS aún no arranca**.
 - VGA por planos y framebuffer VBE, hasta 1024 × 768, paleta del invitado,
   actualizaciones parciales de vídeo y ratón absoluto compatible con VMware.
